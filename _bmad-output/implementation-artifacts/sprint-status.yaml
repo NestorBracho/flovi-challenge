@@ -62,7 +62,7 @@ story_location: "{project-root}/_bmad-output/implementation-artifacts"
 
 development_status:
   epic-1: in-progress
-  1-1-profiles-schema-role-claiming-rpc: in-progress
+  1-1-profiles-schema-role-claiming-rpc: review
   1-2-relocation-request-schema-dispatcher-crud-cancellation: ready-for-dev
   1-3-driver-visibility-booking-priority-mechanic: ready-for-dev
   1-4-driver-cancellation-24h-cutoff-auto-reassignment-notifications: ready-for-dev

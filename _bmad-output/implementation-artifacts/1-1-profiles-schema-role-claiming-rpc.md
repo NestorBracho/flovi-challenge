@@ -4,7 +4,7 @@ baseline_commit: NO_COMMITS_YET
 
 # Story 1.1: Profiles Schema & Role-Claiming RPC
 
-Status: in-progress
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -25,36 +25,36 @@ so that the correct app experience is enforced from that point on and no one can
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Scaffold the monorepo and make the first commit (AC: #1)
-  - [ ] Create `flovi/` at repo root (this repo's origin is already `git@github.com:NestorBracho/flovi-challenge.git`, currently zero commits on `main` — this task produces the first commit)
-  - [ ] `apps/dispatcher-web`: `npm create vite@latest dispatcher-web -- --template vue`, then install Tailwind v4 via `npm install tailwindcss @tailwindcss/vite` — **do not** generate `tailwind.config.js`/PostCSS config (v3 pattern); v4 is CSS-first (see Dev Notes)
-  - [ ] `apps/driver-mobile`: `flutter create --platforms=web driver-mobile` — pass `--platforms=web` explicitly, don't rely on default platform scaffolding
-  - [ ] `supabase/`: create `migrations/` (empty dir, first migration added in Task 2), plus empty placeholder files `functions.sql`, `policies.sql`, `seed.sql` — these three are single cumulative files appended to across Stories 1.1–1.6, never split per-story or per-RPC (see Dev Notes)
-  - [ ] Stage and commit everything as the initial scaffolding commit; do not squash later stories into this commit — NFR4 requires visible incremental history
+- [x] Task 1 — Scaffold the monorepo and make the first commit (AC: #1)
+  - [x] Create `flovi/` at repo root (this repo's origin is already `git@github.com:NestorBracho/flovi-challenge.git`, currently zero commits on `main` — this task produces the first commit)
+  - [x] `apps/dispatcher-web`: `npm create vite@latest dispatcher-web -- --template vue`, then install Tailwind v4 via `npm install tailwindcss @tailwindcss/vite` — **do not** generate `tailwind.config.js`/PostCSS config (v3 pattern); v4 is CSS-first (see Dev Notes)
+  - [x] `apps/driver-mobile`: `flutter create --platforms=web driver-mobile` — pass `--platforms=web` explicitly, don't rely on default platform scaffolding
+  - [x] `supabase/`: create `migrations/` (empty dir, first migration added in Task 2), plus empty placeholder files `functions.sql`, `policies.sql`, `seed.sql` — these three are single cumulative files appended to across Stories 1.1–1.6, never split per-story or per-RPC (see Dev Notes)
+  - [x] Stage and commit everything as the initial scaffolding commit; do not squash later stories into this commit — NFR4 requires visible incremental history
 
-- [ ] Task 2 — `profiles` table migration (AC: #2)
-  - [ ] New file `supabase/migrations/<timestamp>_create_profiles.sql`
-  - [ ] Columns exactly as specified in AC #2; `id` FK references `auth.users(id)`; add `CHECK (role IN ('dispatcher','driver'))` on `role` as a defensive guardrail (the only two values any client ever passes, per AD-2)
-  - [ ] Enable RLS on `profiles` (policies added in Task 4 — do not leave RLS disabled even temporarily once the table is live)
+- [x] Task 2 — `profiles` table migration (AC: #2)
+  - [x] New file `supabase/migrations/<timestamp>_create_profiles.sql`
+  - [x] Columns exactly as specified in AC #2; `id` FK references `auth.users(id)`; add `CHECK (role IN ('dispatcher','driver'))` on `role` as a defensive guardrail (the only two values any client ever passes, per AD-2)
+  - [x] Enable RLS on `profiles` (policies added in Task 4 — do not leave RLS disabled even temporarily once the table is live)
 
-- [ ] Task 3 — `claim_role` RPC (AC: #2, #3, #4)
-  - [ ] Append to `supabase/functions.sql` (do not create a separate file — see Dev Notes on shared files)
-  - [ ] `SECURITY DEFINER`, and explicitly `SET search_path = public` in the function definition (see Dev Notes — this is a real security requirement, not in the architecture doc)
-  - [ ] Parameter name is a cross-story API contract — use exactly `p_role` (see Dev Notes: "RPC Parameter Naming Contract")
-  - [ ] Logic: reject if `auth.uid()` is null; if no existing `profiles` row for the caller, insert one with `role = p_role` and `full_name = COALESCE(raw_user_meta_data->>'full_name', raw_user_meta_data->>'name')` read from `auth.users` for `id = auth.uid()`; if an existing row has `role = p_role` already, no-op success (idempotent — see Dev Notes); if an existing row has a **different** role, `RAISE EXCEPTION`
+- [x] Task 3 — `claim_role` RPC (AC: #2, #3, #4)
+  - [x] Append to `supabase/functions.sql` (do not create a separate file — see Dev Notes on shared files)
+  - [x] `SECURITY DEFINER`, and explicitly `SET search_path = public` in the function definition (see Dev Notes — this is a real security requirement, not in the architecture doc)
+  - [x] Parameter name is a cross-story API contract — use exactly `p_role` (see Dev Notes: "RPC Parameter Naming Contract")
+  - [x] Logic: reject if `auth.uid()` is null; if no existing `profiles` row for the caller, insert one with `role = p_role` and `full_name = COALESCE(raw_user_meta_data->>'full_name', raw_user_meta_data->>'name')` read from `auth.users` for `id = auth.uid()`; if an existing row has `role = p_role` already, no-op success (idempotent — see Dev Notes); if an existing row has a **different** role, `RAISE EXCEPTION`
 
-- [ ] Task 4 — RLS policies for `profiles` (AC: #5, #6)
-  - [ ] Append to `supabase/policies.sql` (do not create a separate file)
-  - [ ] One SELECT policy: `USING (true)` for the `authenticated` role
-  - [ ] Deliberately add **no** INSERT/UPDATE/DELETE policy for `authenticated`/`anon` on `profiles` — with RLS enabled and no such policy, all direct-client writes are denied by default, which is what satisfies AC #5 (see Dev Notes — do not add a self-update policy "to be safe," it isn't needed and would reopen the hole AD-2/AD-6 exist to close)
+- [x] Task 4 — RLS policies for `profiles` (AC: #5, #6)
+  - [x] Append to `supabase/policies.sql` (do not create a separate file)
+  - [x] One SELECT policy: `USING (true)` for the `authenticated` role
+  - [x] Deliberately add **no** INSERT/UPDATE/DELETE policy for `authenticated`/`anon` on `profiles` — with RLS enabled and no such policy, all direct-client writes are denied by default, which is what satisfies AC #5 (see Dev Notes — do not add a self-update policy "to be safe," it isn't needed and would reopen the hole AD-2/AD-6 exist to close)
 
-- [ ] Task 5 — Manual verification (AC: all)
-  - [ ] Apply the migration, `functions.sql`, and `policies.sql` to the live Supabase project (SQL Editor or CLI — see Dev Notes on execution mechanics; no automated test suite is in scope per NFR/non-goals)
-  - [ ] Call `claim_role('dispatcher')` as a fresh test user with no `profiles` row → row created, `full_name` populated
-  - [ ] Call `claim_role('dispatcher')` again as the same user → no-op success, no error, no duplicate row
-  - [ ] Call `claim_role('driver')` as that same (now-dispatcher) user → exception raised, role unchanged
-  - [ ] Attempt a direct `UPDATE profiles SET role = 'driver' WHERE id = auth.uid()` as an authenticated client (e.g., via `supabase-js` with the anon key, or `curl` against PostgREST) → rejected/no rows affected, re-`SELECT` confirms `role` unchanged
-  - [ ] `SELECT * FROM profiles` as any authenticated test user → all rows returned
+- [x] Task 5 — Manual verification (AC: all)
+  - [x] Apply the migration, `functions.sql`, and `policies.sql` to the live Supabase project (SQL Editor or CLI — see Dev Notes on execution mechanics; no automated test suite is in scope per NFR/non-goals)
+  - [x] Call `claim_role('dispatcher')` as a fresh test user with no `profiles` row → row created, `full_name` populated
+  - [x] Call `claim_role('dispatcher')` again as the same user → no-op success, no error, no duplicate row
+  - [x] Call `claim_role('driver')` as that same (now-dispatcher) user → exception raised, role unchanged
+  - [x] Attempt a direct `UPDATE profiles SET role = 'driver' WHERE id = auth.uid()` as an authenticated client (e.g., via `supabase-js` with the anon key, or `curl` against PostgREST) → rejected/no rows affected, re-`SELECT` confirms `role` unchanged
+  - [x] `SELECT * FROM profiles` as any authenticated test user → all rows returned
 
 ## Dev Notes
 
@@ -111,10 +111,29 @@ No automated test suite is in scope (explicit non-goal, SPEC.md Constraints). Ve
 
 ### Agent Model Used
 
-_To be filled by dev agent during implementation._
+Claude Sonnet 5 (claude-sonnet-5), via Claude Code
 
 ### Debug Log References
 
+- Flutter SDK and Supabase CLI were not present on the dev machine; installed via `brew install --cask flutter` and `brew install supabase/tap/supabase` after user confirmation.
+- `flutter create driver-mobile` fails directly ("driver-mobile" is not a valid Dart package name); used `flutter create --platforms=web --project-name=driver_mobile driver-mobile` to keep the directory name matching the architecture source tree while satisfying Dart's package-name rules.
+- Manual verification (Task 5) was run directly against the user's live Supabase Postgres instance via `psql`, simulating an authenticated session with `SET ROLE authenticated` + `set_config('request.jwt.claim.sub', ...)` to exercise RLS and `auth.uid()` exactly as PostgREST would. Test user and its `profiles` row were deleted after verification; no residual test data left in the project.
+
 ### Completion Notes List
 
+- Root-level scaffold: `flovi/apps/dispatcher-web` (Vite + Vue 3 + Tailwind v4, CSS-first — `@tailwindcss/vite` plugin wired into `vite.config.js`, `@import "tailwindcss";` added to `src/style.css`), `flovi/apps/driver-mobile` (Flutter, web platform only), `flovi/supabase/{migrations,functions.sql,policies.sql,seed.sql}`.
+- Added root `.gitignore` (node_modules, build/dist output, Dart tooling artifacts, `_bmad/`, `.claude/`, `.DS_Store`).
+- First commit made to `main` (previously zero commits) containing the `flovi/` scaffold plus `docs/` and `_bmad-output/` planning artifacts, per user decision to include planning docs as delivery artifacts (Story 4.2 scope). `_bmad/` (framework installation) and `.claude/` (local agent config) intentionally excluded.
+- `profiles` table migration, `claim_role` RPC (SECURITY DEFINER, `search_path=public`, `p_role` parameter per the cross-story naming contract), and the single `profiles` SELECT policy were all written per Dev Notes guidance — no UPDATE/INSERT/DELETE policy added by design.
+- Task 5 verification executed against the user's live Supabase project (connection string supplied directly by user for this session only) — all six checks in the task passed on the first attempt: row creation with `full_name` populated, idempotent same-role reclaim, exception on role-mismatch reclaim, direct client `UPDATE` blocked (0 rows affected) by RLS default-deny, and open `SELECT` returning all rows for `authenticated`.
+- Did not push the new commit to `origin` — local commit only, per instruction to confirm before pushing shared/remote state.
+
 ### File List
+
+- `.gitignore` (new)
+- `flovi/apps/dispatcher-web/**` (new — Vite/Vue3 scaffold; Tailwind v4 wiring in `vite.config.js`, `src/style.css`)
+- `flovi/apps/driver-mobile/**` (new — Flutter web scaffold, package name `driver_mobile`)
+- `flovi/supabase/migrations/20260708181326_create_profiles.sql` (new)
+- `flovi/supabase/functions.sql` (new — `claim_role` RPC)
+- `flovi/supabase/policies.sql` (new — `profiles` SELECT policy)
+- `flovi/supabase/seed.sql` (new — empty placeholder)
