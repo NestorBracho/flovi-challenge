@@ -1,0 +1,436 @@
+<title>Flovi — Direction: Bold & Energetic</title>
+<style>
+/*
+  DIRECTION: bold-energetic
+  colors:
+    canvas bg:          #F2F1ED (light warm-neutral, not sterile white)
+    surface (cards):     #FFFFFF
+    ink (headers/CTA):   #0A0A0A
+    border:              #E7E5DF
+    text-primary:        #111111
+    text-secondary:      #6E6C66
+    text-tertiary:       #A3A099
+    accent (brand):      #FF3D00 (vivid vermillion)
+    accent-tint:         #FFE4D9
+    status unbooked:     #FF3D00 (brand accent)
+    status booked:       #2D5BFF (electric blue)
+    status completed:    #16A34A (kelly green)
+    status cancelled:    #E11D48 (crimson)
+*/
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: #F2F1ED;
+  color: #111111;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+body { padding: 56px 24px 100px; }
+
+/* ---------- Rationale ---------- */
+.rationale {
+  max-width: 980px; margin: 0 auto 44px; padding: 24px 28px;
+  background: #0A0A0A; color: #F2F1ED; border-radius: 4px; position: relative; overflow: hidden;
+}
+.rationale::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #FF3D00; }
+.rationale .tag {
+  display: inline-block; font-size: 12.5px; font-weight: 800; letter-spacing: 0.02em;
+  color: #FF3D00; margin-bottom: 12px;
+}
+.rationale p { margin: 0; font-size: 15px; line-height: 1.65; color: #D8D6CF; font-weight: 450; }
+
+.section-label {
+  max-width: 1180px; margin: 0 auto 16px; font-size: 13px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.07em; color: #A3A099;
+}
+
+/* ---------- Browser chrome ---------- */
+.browser-frame {
+  max-width: 1180px; margin: 0 auto 64px; border-radius: 12px; overflow: hidden;
+  border: 1px solid #111; box-shadow: 0 40px 90px -28px rgba(10,10,10,0.45);
+}
+.browser-topbar {
+  background: #0A0A0A; padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+}
+.browser-dots { display: flex; gap: 7px; }
+.browser-dots span { width: 11px; height: 11px; border-radius: 50%; display: inline-block; background: #333; }
+.browser-dots span:nth-child(1) { background: #FF3D00; }
+.browser-addr {
+  flex: 1; background: #1c1c1c; border-radius: 6px; padding: 7px 14px;
+  font-size: 12.5px; color: #8a8a8a; font-weight: 600;
+}
+
+/* ---------- App layout ---------- */
+.app { display: flex; flex-direction: column; background: #FFFFFF; min-height: 680px; position: relative; }
+.topbar {
+  background: #0A0A0A; color: #fff; padding: 16px 30px; display: flex; align-items: center; justify-content: space-between;
+}
+.topbar-left { display: flex; align-items: center; gap: 30px; }
+.brand { display: flex; align-items: center; gap: 9px; }
+.brand-mark { width: 26px; height: 26px; border-radius: 6px; background: #FF3D00; display:flex; align-items:center; justify-content:center; font-weight: 900; font-size: 14px; }
+.brand-name { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+.topnav { display: flex; gap: 22px; }
+.topnav .item { font-size: 13.5px; font-weight: 700; color: #9a9a9a; padding-bottom: 3px; }
+.topnav .item.active { color: #fff; border-bottom: 2px solid #FF3D00; }
+.topnav .item .badge { background: #FF3D00; color: #fff; font-size: 9.5px; padding: 1px 6px; border-radius: 100px; margin-left: 5px; font-weight: 800; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.avatar-sm { width: 32px; height: 32px; border-radius: 50%; background: #262626; color: #fff; display:flex;align-items:center;justify-content:center; font-size: 12px; font-weight: 800; }
+
+.main { flex: 1; padding: 26px 30px 34px; }
+.main-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 22px; gap: 16px; }
+.main-header h1 { font-size: 30px; margin: 0; font-weight: 900; letter-spacing: -0.02em; }
+.main-header .sub { font-size: 13.5px; color: #6E6C66; margin-top: 6px; font-weight: 600; }
+.header-actions { display: flex; gap: 10px; align-items: center; }
+.search-box {
+  background: #F2F1ED; border: none; border-radius: 100px; padding: 12px 18px;
+  font-size: 13px; color: #6E6C66; width: 190px; font-weight: 600;
+}
+.btn-primary {
+  background: #0A0A0A; color: #fff; border: none; border-radius: 100px;
+  padding: 13px 22px; font-size: 14px; font-weight: 800; cursor: default;
+}
+.btn-primary .dot { color: #FF3D00; margin-right: 6px; }
+.btn-ghost {
+  background: #fff; color: #111; border: 2px solid #0A0A0A; border-radius: 100px;
+  padding: 11px 20px; font-size: 14px; font-weight: 800; cursor: default;
+}
+
+/* stats */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.stat-card { background: #FAFAF8; border-radius: 14px; padding: 18px 20px; border: 1px solid #EDEBE5; }
+.stat-num { font-size: 32px; font-weight: 900; letter-spacing: -0.02em; line-height: 1; }
+.stat-card.c-unbooked .stat-num { color: #FF3D00; }
+.stat-card.c-booked .stat-num { color: #2D5BFF; }
+.stat-card.c-completed .stat-num { color: #16A34A; }
+.stat-card.c-cancelled .stat-num { color: #E11D48; }
+.stat-lbl { font-size: 12.5px; color: #6E6C66; font-weight: 750; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+
+/* filter pills */
+.chips { display: flex; gap: 8px; margin-bottom: 18px; }
+.chip { font-size: 13px; padding: 8px 16px; border-radius: 100px; background: #F2F1ED; color: #6E6C66; font-weight: 750; }
+.chip.active { background: #0A0A0A; color: #fff; }
+
+/* list */
+.req-list { display: flex; flex-direction: column; }
+.req-row {
+  display: flex; align-items: center; gap: 16px; padding: 16px 6px; border-bottom: 1px solid #EDEBE5;
+}
+.req-row:first-child { padding-top: 6px; }
+.req-route-block { flex: 1.5; min-width: 0; }
+.req-route { font-size: 16px; font-weight: 800; color: #111; letter-spacing: -0.01em; }
+.req-route .arrow { color: #FF3D00; margin: 0 6px; font-weight: 900; }
+.req-notes { font-size: 12.5px; color: #6E6C66; margin-top: 4px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.req-date { flex: 0 0 100px; font-size: 13px; color: #111; font-weight: 750; }
+.req-driver { flex: 0 0 130px; font-size: 12.5px; color: #6E6C66; font-weight: 650; }
+.req-status { flex: 0 0 128px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800;
+  padding: 7px 14px; border-radius: 100px; color: #fff;
+}
+.pill .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.85); }
+.pill.unbooked { background: #FF3D00; }
+.pill.booked { background: #2D5BFF; }
+.pill.completed { background: #16A34A; }
+.pill.cancelled { background: #E11D48; }
+.req-action { flex: 0 0 70px; text-align: right; }
+.req-action span { font-size: 12.5px; font-weight: 800; color: #111; border-bottom: 2px solid #FF3D00; padding-bottom: 1px; }
+
+/* bottom sheet */
+.sheet-overlay { position: absolute; inset: 0; background: rgba(10,10,10,0.5); display: flex; align-items: flex-end; justify-content: center; }
+.sheet {
+  width: 100%; background: #fff; border-radius: 24px 24px 0 0; padding: 22px 30px 26px;
+  box-shadow: 0 -20px 50px rgba(10,10,10,0.25);
+}
+.sheet-handle { width: 42px; height: 5px; border-radius: 100px; background: #E7E5DF; margin: 0 auto 16px; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.sheet-head h2 { font-size: 20px; margin: 0; font-weight: 900; }
+.sheet-head .x { font-size: 15px; font-weight: 800; color: #6E6C66; }
+.sheet-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.field label { display: block; font-size: 11px; font-weight: 800; color: #6E6C66; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+.field input, .field textarea {
+  width: 100%; background: #F2F1ED; border: none; border-radius: 10px; padding: 11px 13px;
+  font-size: 13.5px; color: #111; font-weight: 650; font-family: inherit;
+}
+.field textarea { resize: none; height: 48px; grid-column: 1 / -1; }
+.sheet-actions { display: flex; gap: 10px; margin-top: 4px; }
+.sheet-actions .btn-primary, .sheet-actions .btn-ghost { flex: 1; text-align: center; padding: 14px; }
+
+/* ---------- state variant: gig no longer available ---------- */
+.state-swatch-wrap { max-width: 1180px; margin: 0 auto 64px; }
+.state-banner {
+  background: #0A0A0A; color: #fff; border-radius: 14px; padding: 20px 26px;
+  display: flex; align-items: center; gap: 16px;
+}
+.state-banner .ic { width: 40px; height: 40px; border-radius: 10px; background: #E11D48; display:flex; align-items:center; justify-content:center; font-weight: 900; font-size: 18px; flex-shrink: 0; }
+.state-banner .txt h3 { margin: 0 0 4px; font-size: 15.5px; font-weight: 800; }
+.state-banner .txt p { margin: 0; font-size: 13px; color: #b9b7b0; font-weight: 550; }
+
+/* ---------- Phones ---------- */
+.phones-row { max-width: 1180px; margin: 0 auto; display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; }
+.phone {
+  width: 375px; border-radius: 44px; background: #0A0A0A; border: 10px solid #0A0A0A;
+  box-shadow: 0 40px 90px -28px rgba(10,10,10,0.45); overflow: hidden; position: relative;
+}
+.phone-notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 130px; height: 22px; background: #0A0A0A; border-radius: 0 0 14px 14px; z-index: 5; }
+.phone-screen { background: #fff; min-height: 720px; padding-top: 32px; display: flex; flex-direction: column; }
+.phone-statusbar { display:flex; justify-content: space-between; padding: 6px 22px 6px; font-size: 12.5px; color: #111; font-weight: 800; }
+.phone-header { padding: 8px 20px 14px; }
+.phone-header h2 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.02em; }
+.phone-header .sub { font-size: 12.5px; color: #6E6C66; margin-top: 5px; font-weight: 650; }
+.phone-body { padding: 4px 16px 16px; flex: 1; overflow-y: auto; }
+.gig-card {
+  background: #FAFAF8; border-radius: 18px; padding: 16px 17px; margin-bottom: 12px; border: 1px solid #EDEBE5;
+}
+.gig-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.gig-tag {
+  font-size: 10.5px; font-weight: 800; color: #fff; background: #FF3D00; padding: 4px 10px; border-radius: 100px;
+  text-transform: uppercase; letter-spacing: 0.03em;
+}
+.gig-date-txt { font-size: 12px; font-weight: 750; color: #6E6C66; }
+.gig-route { font-weight: 850; font-size: 16px; color: #111; margin-bottom: 6px; letter-spacing: -0.01em; }
+.gig-route .arrow { color: #FF3D00; margin: 0 5px; font-weight: 900; }
+.gig-notes { font-size: 12.5px; color: #6E6C66; line-height: 1.5; margin-bottom: 13px; font-weight: 550; }
+.gig-btn {
+  display: block; text-align: center; background: #0A0A0A; color: #fff; font-weight: 800;
+  font-size: 14px; padding: 14px; border-radius: 100px;
+}
+.gig-btn.secondary { background: #F2F1ED; color: #111; }
+.gig-btn.disabled-cancel { background: #F2F1ED; color: #A3A099; }
+.gig-btn-row { display: flex; gap: 8px; }
+.gig-btn-row .gig-btn { flex: 1; }
+.disabled-note { font-size: 11px; color: #A3A099; margin-top: 8px; text-align: center; font-weight: 700; }
+.tabbar { display: flex; border-top: 1px solid #EDEBE5; background: #fff; padding: 12px 0 18px; }
+.tabbar .tab { flex: 1; text-align: center; font-size: 11px; color: #A3A099; font-weight: 800; }
+.tabbar .tab.active { color: #0A0A0A; }
+.tabbar .tab.active .ic { color: #FF3D00; }
+.tabbar .tab .ic { display: block; font-size: 18px; margin-bottom: 3px; }
+
+/* unavailable gig card (state variant, in-context) */
+.gig-card.taken { background: #FAFAF8; opacity: 0.62; }
+.gig-card.taken .gig-route, .gig-card.taken .gig-notes { color: #A3A099; }
+.gig-card.taken .gig-tag { background: #A3A099; }
+.taken-flag {
+  display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 800; color: #E11D48;
+  margin-bottom: 10px;
+}
+.taken-flag .x { width: 16px; height: 16px; border-radius: 50%; background: #E11D48; color: #fff; display:flex; align-items:center; justify-content:center; font-size: 10px; font-weight: 900; }
+</style>
+
+<div class="rationale">
+  <span class="tag">Direction 03 · bold-energetic</span>
+  <p>
+    Channels modern gig-economy consumer apps: big confident type, a single vibrant accent against near-black and white, and
+    high-contrast CTAs that make the next action unmissable. It's tuned for the driver's browse-and-book moment, where someone
+    is scanning gigs fast and "Book this gig" needs to read as an obvious, satisfying tap. Applied to the dispatcher dashboard
+    it trades data density for clarity and speed — more lightweight ops tool than enterprise console, which may be a feature
+    or a gap depending on how many requests a dispatcher juggles at once.
+  </p>
+</div>
+
+<div class="section-label">Dispatcher web — app.flovi.io/dispatch</div>
+<div class="browser-frame">
+  <div class="browser-topbar">
+    <div class="browser-dots"><span></span><span></span><span></span></div>
+    <div class="browser-addr">app.flovi.io/dispatch/requests</div>
+  </div>
+  <div class="app">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="brand"><div class="brand-mark">F</div><div class="brand-name">FLOVI</div></div>
+        <div class="topnav">
+          <div class="item">Overview</div>
+          <div class="item active">Requests</div>
+          <div class="item">Drivers</div>
+          <div class="item">Notifications<span class="badge">1</span></div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="avatar-sm">NB</div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="main-header">
+        <div>
+          <h1>Relocation requests</h1>
+          <div class="sub">18 total — 6 need a driver right now</div>
+        </div>
+        <div class="header-actions">
+          <input class="search-box" value="Search requests" readonly />
+          <button class="btn-primary"><span class="dot">●</span>New request</button>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card c-unbooked"><div class="stat-num">6</div><div class="stat-lbl">Unbooked</div></div>
+        <div class="stat-card c-booked"><div class="stat-num">7</div><div class="stat-lbl">Booked</div></div>
+        <div class="stat-card c-completed"><div class="stat-num">4</div><div class="stat-lbl">Completed</div></div>
+        <div class="stat-card c-cancelled"><div class="stat-num">1</div><div class="stat-lbl">Cancelled</div></div>
+      </div>
+
+      <div class="chips">
+        <div class="chip active">All</div>
+        <div class="chip">Unbooked</div>
+        <div class="chip">Booked</div>
+        <div class="chip">Completed</div>
+        <div class="chip">Cancelled</div>
+      </div>
+
+      <div class="req-list">
+        <div class="req-row">
+          <div class="req-route-block">
+            <div class="req-route">Fremont, Seattle <span class="arrow">→</span> Ballard, WA</div>
+            <div class="req-notes">Studio, street parking only, tight timeline</div>
+          </div>
+          <div class="req-date">Jul 15, 2026</div>
+          <div class="req-driver">Unassigned</div>
+          <div class="req-status"><span class="pill unbooked"><span class="dot"></span>Unbooked</span></div>
+          <div class="req-action"><span>Edit</span></div>
+        </div>
+        <div class="req-row">
+          <div class="req-route-block">
+            <div class="req-route">Mission District, SF <span class="arrow">→</span> Oakland Hills</div>
+            <div class="req-notes">2BR apartment, elevator access needed</div>
+          </div>
+          <div class="req-date">Jul 12, 2026</div>
+          <div class="req-driver">Unassigned</div>
+          <div class="req-status"><span class="pill unbooked"><span class="dot"></span>Unbooked</span></div>
+          <div class="req-action"><span>Edit</span></div>
+        </div>
+        <div class="req-row">
+          <div class="req-route-block">
+            <div class="req-route">Back Bay, Boston <span class="arrow">→</span> Cambridge, MA</div>
+            <div class="req-notes">3BR house, long carry from curb</div>
+          </div>
+          <div class="req-date">Jul 9, 2026</div>
+          <div class="req-driver">Marcus Webb</div>
+          <div class="req-status"><span class="pill booked"><span class="dot"></span>Booked</span></div>
+          <div class="req-action"><span>Edit</span></div>
+        </div>
+        <div class="req-row">
+          <div class="req-route-block">
+            <div class="req-route">Capitol Hill, Seattle <span class="arrow">→</span> Bellevue, WA</div>
+            <div class="req-notes">Full house move, 3 flights of stairs</div>
+          </div>
+          <div class="req-date">Jul 5, 2026</div>
+          <div class="req-driver">Priya Nair</div>
+          <div class="req-status"><span class="pill completed"><span class="dot"></span>Completed</span></div>
+          <div class="req-action"><span>View</span></div>
+        </div>
+        <div class="req-row">
+          <div class="req-route-block">
+            <div class="req-route">Wicker Park, Chicago <span class="arrow">→</span> Naperville, IL</div>
+            <div class="req-notes">Client rescheduled indefinitely</div>
+          </div>
+          <div class="req-date">Jul 3, 2026</div>
+          <div class="req-driver">Unassigned</div>
+          <div class="req-status"><span class="pill cancelled"><span class="dot"></span>Cancelled</span></div>
+          <div class="req-action"><span>View</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet-overlay">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-head"><h2>Edit request</h2><span class="x">✕ Close</span></div>
+        <div class="sheet-grid">
+          <div class="field"><label>Origin</label><input value="Mission District, SF" /></div>
+          <div class="field"><label>Destination</label><input value="Oakland Hills" /></div>
+          <div class="field"><label>Date</label><input value="Jul 12, 2026" /></div>
+          <div class="field" style="grid-column: 1 / -1;"><label>Notes</label><textarea>2BR apartment, elevator access needed</textarea></div>
+        </div>
+        <div class="sheet-actions">
+          <button class="btn-ghost">Discard</button>
+          <button class="btn-primary">Save request</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section-label">Driver mobile — Flovi Driver</div>
+<div class="phones-row">
+  <div class="phone">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="phone-statusbar"><span>9:41</span><span>●●●●●</span></div>
+      <div class="phone-header">
+        <h2>Available gigs</h2>
+        <div class="sub">3 open near Seattle, WA</div>
+      </div>
+      <div class="phone-body">
+        <div class="gig-card">
+          <div class="gig-top"><span class="gig-tag">Available</span><span class="gig-date-txt">Jul 15, 2026</span></div>
+          <div class="gig-route">Fremont, Seattle <span class="arrow">→</span> Ballard, WA</div>
+          <div class="gig-notes">Studio, street parking only, tight timeline.</div>
+          <div class="gig-btn">Book this gig</div>
+        </div>
+        <div class="gig-card">
+          <div class="gig-top"><span class="gig-tag">Available</span><span class="gig-date-txt">Jul 14, 2026</span></div>
+          <div class="gig-route">Wicker Park, Chicago <span class="arrow">→</span> Naperville, IL</div>
+          <div class="gig-notes">1BR, second floor walk-up, narrow stairwell.</div>
+          <div class="gig-btn">Book this gig</div>
+        </div>
+        <div class="gig-card">
+          <div class="gig-top"><span class="gig-tag">Available</span><span class="gig-date-txt">Jul 12, 2026</span></div>
+          <div class="gig-route">Mission District, SF <span class="arrow">→</span> Oakland Hills</div>
+          <div class="gig-notes">2BR apartment, elevator access needed.</div>
+          <div class="gig-btn">Book this gig</div>
+        </div>
+        <div class="gig-card taken">
+          <div class="taken-flag"><span class="x">✕</span>This gig is no longer available</div>
+          <div class="gig-route">Logan Square, Chicago <span class="arrow">→</span> Evanston, IL</div>
+          <div class="gig-notes">Another driver booked this while you were browsing.</div>
+          <div class="gig-btn disabled-cancel">Booked by another driver</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab active"><span class="ic">◆</span>Gigs</div>
+        <div class="tab"><span class="ic">▣</span>Booked</div>
+        <div class="tab"><span class="ic">●</span>Profile</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phone">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="phone-statusbar"><span>9:41</span><span>●●●●●</span></div>
+      <div class="phone-header">
+        <h2>My booked gigs</h2>
+        <div class="sub">2 booked · Marcus Webb</div>
+      </div>
+      <div class="phone-body">
+        <div class="gig-card">
+          <div class="gig-top"><span class="gig-tag" style="background:#2D5BFF;">Booked</span><span class="gig-date-txt">Jul 9, 2026</span></div>
+          <div class="gig-route">Back Bay, Boston <span class="arrow">→</span> Cambridge, MA</div>
+          <div class="gig-notes">3BR house, long carry from curb.</div>
+          <div class="gig-btn-row">
+            <div class="gig-btn disabled-cancel">Cancel</div>
+            <div class="gig-btn secondary">Details</div>
+          </div>
+          <div class="disabled-note">Cancellation window closed — under 24h to pickup</div>
+        </div>
+        <div class="gig-card">
+          <div class="gig-top"><span class="gig-tag" style="background:#2D5BFF;">Booked</span><span class="gig-date-txt">Jul 22, 2026</span></div>
+          <div class="gig-route">Wallingford, Seattle <span class="arrow">→</span> Kirkland, WA</div>
+          <div class="gig-notes">1BR, second floor, no elevator.</div>
+          <div class="gig-btn-row">
+            <div class="gig-btn secondary">Cancel gig</div>
+            <div class="gig-btn secondary">Details</div>
+          </div>
+        </div>
+        <div class="gig-card">
+          <div class="gig-top"><span class="gig-tag" style="background:#16A34A;">Ready to close out</span><span class="gig-date-txt">Jul 5, 2026</span></div>
+          <div class="gig-route">Capitol Hill, Seattle <span class="arrow">→</span> Bellevue, WA</div>
+          <div class="gig-notes">Full house move, 3 flights of stairs.</div>
+          <div class="gig-btn">Mark as completed</div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab"><span class="ic">◆</span>Gigs</div>
+        <div class="tab active"><span class="ic">▣</span>Booked</div>
+        <div class="tab"><span class="ic">●</span>Profile</div>
+      </div>
+    </div>
+  </div>
+</div>

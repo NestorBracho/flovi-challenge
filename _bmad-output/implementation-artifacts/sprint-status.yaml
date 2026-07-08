@@ -1,0 +1,92 @@
+# generated: 2026-07-08
+# last_updated: 2026-07-08
+# project: FloviChallenge
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: {project-root}/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; sprint-status surfaces open ones
+#
+# SEQUENCING NOTES (this project — solo, AI-generated-code-only, 4-hour hard cap):
+# ==================================================================================
+# - Epic 1 (backend contract, 6 stories) has no forward dependents within itself —
+#   its stories run sequentially (1.1 → 1.6) since each builds schema/RPCs the next relies on.
+# - Epic 2 (dispatcher web) and Epic 3 (driver mobile) are each independently buildable
+#   against Epic 1 alone and do NOT depend on each other — once Epic 1 is done, these two
+#   epics can be worked in either order, or interleaved, without blocking one another.
+# - Epic 4 (2 stories) depends on Epic 1 + Epic 2 + Epic 3 ALL being complete — it verifies
+#   the cross-app realtime loop and produces delivery artifacts, so it must run last.
+# - Given the 4-hour cap, treat Epic 1 as the critical-path bottleneck: nothing in Epic 2/3
+#   can start until it's done, so budget time there conservatively before splitting effort
+#   across the two client apps.
+
+generated: 2026-07-08
+last_updated: 2026-07-08
+project: FloviChallenge
+project_key: NOKEY
+tracking_system: file-system
+story_location: "{project-root}/_bmad-output/implementation-artifacts"
+
+development_status:
+  epic-1: in-progress
+  1-1-profiles-schema-role-claiming-rpc: in-progress
+  1-2-relocation-request-schema-dispatcher-crud-cancellation: ready-for-dev
+  1-3-driver-visibility-booking-priority-mechanic: ready-for-dev
+  1-4-driver-cancellation-24h-cutoff-auto-reassignment-notifications: ready-for-dev
+  1-5-ride-completion-priority-count-increment: ready-for-dev
+  1-6-realtime-publication-seed-data-auth-configuration: ready-for-dev
+  epic-1-retrospective: optional
+
+  epic-2: in-progress
+  2-1-app-shell-design-tokens-login-role-claiming: ready-for-dev
+  2-2-requests-list-with-realtime-sync-search-filter: ready-for-dev
+  2-3-create-edit-request-via-modal: ready-for-dev
+  2-4-cancel-request-dispatcher-notifications: ready-for-dev
+  2-5-deploy-dispatcher-web-to-vercel: ready-for-dev
+  epic-2-retrospective: optional
+
+  epic-3: in-progress
+  3-1-app-shell-design-tokens-login-role-claiming: ready-for-dev
+  3-2-gigs-list-realtime-sync-booking-confirmation: ready-for-dev
+  3-3-booked-gigs-list: ready-for-dev
+  3-4-cancel-24h-rule-mark-complete: ready-for-dev
+  3-5-deploy-driver-mobile-to-vercel: ready-for-dev
+  epic-3-retrospective: optional
+
+  epic-4: in-progress
+  4-1-cross-app-end-to-end-realtime-verification: ready-for-dev
+  4-2-repo-prompt-log-reflection-delivery-artifacts: ready-for-dev
+  epic-4-retrospective: optional

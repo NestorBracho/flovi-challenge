@@ -1,0 +1,16 @@
+.DS_Store
+_bmad/
+.claude/
+
+# dispatcher-web (Node/Vite)
+node_modules/
+dist/
+*.local
+
+# driver-mobile (Flutter/Dart)
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/build/
+**/.idea/
+**/*.iml
