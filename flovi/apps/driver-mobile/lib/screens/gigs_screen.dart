@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../services/gigs_service.dart';
 import '../theme/flovi_tokens.dart';
@@ -23,7 +22,6 @@ class _GigsScreenState extends State<GigsScreen> {
   final Set<String> _bookingIds = {};
   final Set<String> _unavailableIds = {};
   final Set<String> _removingIds = {};
-  RealtimeChannel? _channel;
 
   @override
   void initState() {
@@ -46,10 +44,23 @@ class _GigsScreenState extends State<GigsScreen> {
       _gigs = gigs;
       _loading = false;
     });
-    _channel = GigsService.instance.subscribe(
-      onUpsert: _handleUpsert,
-      onRemove: _handleRemove,
-    );
+    GigsService.instance.subscribe(onChange: _handleChange);
+  }
+
+  /// This view's half of Task 1's client-side filter (Story 3.3): a row
+  /// whose new status is `unbooked` is an upsert (a new gig appeared, or a
+  /// reassignment reopened one — Story 1.4's revert path); anything else
+  /// (someone booked it, including this driver's own winning call) is a
+  /// remove. Per RLS's realtime-delivery semantics (see Dev Notes on the
+  /// story), a driver who never bid on a gig someone else won receives no
+  /// event for that change at all — an accepted, understood staleness
+  /// window, not a bug this needs to work around.
+  void _handleChange(Map<String, dynamic> row) {
+    if (row['status'] == 'unbooked') {
+      _handleUpsert(Gig.fromRow(row));
+    } else {
+      _handleRemove(row['id'] as String);
+    }
   }
 
   void _handleUpsert(Gig gig) {
@@ -76,7 +87,7 @@ class _GigsScreenState extends State<GigsScreen> {
 
   @override
   void dispose() {
-    if (_channel != null) GigsService.instance.unsubscribe(_channel!);
+    GigsService.instance.unsubscribe(_handleChange);
     super.dispose();
   }
 

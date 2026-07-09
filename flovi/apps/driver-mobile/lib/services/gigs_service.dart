@@ -17,9 +17,12 @@ const _monthAbbr = [
   'Dec',
 ];
 
-/// An unbooked relocation request as it appears on the driver's Gigs browse
-/// list — driver_visibility RLS (Story 1.3) already scopes what a driver can
-/// SELECT; this model only carries the columns the Gigs surface renders.
+/// A relocation request row as it appears on either driver-mobile list —
+/// Gigs (Story 3.2, unbooked only) or Booked (Story 3.3, this driver's own
+/// booked rows) — driver_visibility RLS (Story 1.3) already scopes what a
+/// driver can SELECT; this model only carries the columns either surface
+/// renders. [driverId] is null for unbooked rows and is only meaningful once
+/// a row has been assigned.
 class Gig {
   const Gig({
     required this.id,
@@ -28,6 +31,7 @@ class Gig {
     required this.scheduledDate,
     required this.notes,
     required this.status,
+    required this.driverId,
   });
 
   final String id;
@@ -36,9 +40,28 @@ class Gig {
   final DateTime scheduledDate;
   final String? notes;
   final String status;
+  final String? driverId;
 
   String get formattedDate =>
       '${_monthAbbr[scheduledDate.month - 1]} ${scheduledDate.day}, ${scheduledDate.year}';
+
+  /// Story 3.4 Task 1's client-side echo of AD-7's cutoff formula —
+  /// `scheduled_date @ 00:00 UTC − 24h` — for instant proactive Cancel-button
+  /// feedback only; `cancel_request_driver`'s own server-side re-check is
+  /// still the authoritative gate. Built from [scheduledDate]'s already-parsed
+  /// year/month/day rather than re-parsing the raw column string a second
+  /// time: those components are exactly what was written in the source date
+  /// string regardless of which timezone `DateTime.parse` assumed when first
+  /// constructing [scheduledDate], so rebuilding them via `DateTime.utc(...)`
+  /// here sidesteps `DateTime.parse`'s local-time default on a bare date
+  /// string — the exact trap this task calls out.
+  DateTime get cancelCutoffUtc => DateTime.utc(
+    scheduledDate.year,
+    scheduledDate.month,
+    scheduledDate.day,
+  ).subtract(const Duration(hours: 24));
+
+  bool get isCancellable => DateTime.now().toUtc().isBefore(cancelCutoffUtc);
 
   factory Gig.fromRow(Map<String, dynamic> row) {
     return Gig(
@@ -48,11 +71,13 @@ class Gig {
       scheduledDate: DateTime.parse(row['scheduled_date'] as String),
       notes: row['notes'] as String?,
       status: row['status'] as String,
+      driverId: row['driver_id'] as String?,
     );
   }
 }
 
-const _selectColumns = 'id, origin, destination, scheduled_date, notes, status';
+const _selectColumns =
+    'id, origin, destination, scheduled_date, notes, status, driver_id';
 
 /// Browse/book side of the driver-mobile Gigs surface (Story 3.2).
 class GigsService {
@@ -73,56 +98,77 @@ class GigsService {
     return rows.map(Gig.fromRow).toList();
   }
 
-  /// One channel, INSERT + UPDATE only — relocation_requests is never hard-
-  /// deleted (every retirement path is a status transition), so a DELETE
-  /// handler would be dead code. No server-side column filter on `status`:
-  /// an UPDATE's filter is evaluated against the *new* row, so filtering to
-  /// `status=eq.unbooked` here would silently swallow the one UPDATE this
-  /// screen most needs — the transition *out* of unbooked when someone else
-  /// books a gig — since by the time that event would fire, the new row no
-  /// longer matches. Branching on `row['status']` client-side handles both
-  /// directions correctly.
-  ///
-  /// [onUpsert] fires when a row's new status is `unbooked` (a new gig
-  /// appeared, or a reassignment reopened one — Story 1.4's revert path).
-  /// [onRemove] fires when a previously-unbooked row's status changed to
-  /// anything else (someone booked it, including this driver's own winning
-  /// call). Per RLS's realtime-delivery semantics (see Dev Notes on the
-  /// story), a driver who never bid on a gig someone else won receives no
-  /// event for that change at all — an accepted, understood staleness
-  /// window, not a bug this subscription needs to work around.
-  RealtimeChannel subscribe({
-    required void Function(Gig gig) onUpsert,
-    required void Function(String id) onRemove,
-  }) {
-    void handle(PostgresChangePayload payload) {
-      final row = payload.newRecord;
-      if (row['status'] == 'unbooked') {
-        onUpsert(Gig.fromRow(row));
-      } else {
-        onRemove(row['id'] as String);
-      }
-    }
+  /// This driver's own currently-booked rows for the Booked list (Story
+  /// 3.3). Scoped server-side to `status = booked AND driver_id = me` even
+  /// though driver_visibility RLS would already let this driver's own rows
+  /// of *any* status (including completed/cancelled history) through — the
+  /// extra filter here is what narrows a broad RLS grant down to what this
+  /// specific view is for, the same split Story 3.2 established for Gigs.
+  Future<List<Gig>> fetchBookedGigs(String driverId) async {
+    final rows = await supabase
+        .from('relocation_requests')
+        .select(_selectColumns)
+        .eq('status', 'booked')
+        .eq('driver_id', driverId)
+        .order('created_at', ascending: false);
+    return rows.map(Gig.fromRow).toList();
+  }
 
-    return supabase
-        .channel('gigs-changes')
+  RealtimeChannel? _channel;
+  final List<void Function(Map<String, dynamic> row)> _listeners = [];
+
+  /// One shared channel for the whole `relocation_requests` table, fanned
+  /// out to every caller — Gigs (Story 3.2) and Booked (Story 3.3) both read
+  /// the same table under the same driver_visibility RLS policy and only
+  /// differ in which status/driver_id predicate they apply to the raw row,
+  /// so a second independent channel here would just be two WebSocket
+  /// connections doing the same job (the dispatcher-web app's notifications
+  /// badge, Story 2.4, established this same "lift the subscription above
+  /// the single view that needs it" precedent). Each caller's [onChange]
+  /// receives the raw row and decides for itself whether it's an
+  /// upsert-into or a remove-from its own filtered list.
+  ///
+  /// INSERT + UPDATE only — relocation_requests is never hard-deleted (every
+  /// retirement path is a status transition), so a DELETE handler would be
+  /// dead code.
+  void subscribe({required void Function(Map<String, dynamic> row) onChange}) {
+    _listeners.add(onChange);
+    _channel ??= supabase
+        .channel('relocation-requests-changes')
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
           schema: 'public',
           table: 'relocation_requests',
-          callback: handle,
+          callback: _dispatch,
         )
         .onPostgresChanges(
           event: PostgresChangeEvent.update,
           schema: 'public',
           table: 'relocation_requests',
-          callback: handle,
+          callback: _dispatch,
         )
         .subscribe();
   }
 
-  void unsubscribe(RealtimeChannel channel) {
-    supabase.removeChannel(channel);
+  void _dispatch(PostgresChangePayload payload) {
+    final row = payload.newRecord;
+    // Iterate a copy: a listener's own callback can synchronously trigger
+    // navigation/dispose that mutates _listeners mid-iteration.
+    for (final listener in List.of(_listeners)) {
+      listener(row);
+    }
+  }
+
+  /// Only tears down the actual channel once the last caller has left —
+  /// Gigs and Booked are both kept alive simultaneously by GoRouter's
+  /// StatefulShellRoute, so one screen unmounting must not cut the other's
+  /// feed.
+  void unsubscribe(void Function(Map<String, dynamic> row) onChange) {
+    _listeners.remove(onChange);
+    if (_listeners.isEmpty && _channel != null) {
+      supabase.removeChannel(_channel!);
+      _channel = null;
+    }
   }
 
   /// The two-step booking sequence — Story 1.3's Dev Notes pin this exactly:
@@ -152,5 +198,26 @@ class GigsService {
       params: {'p_request_id': requestId},
     );
     return won as bool;
+  }
+
+  /// Story 3.4 Task 2's Cancel action. Left uncaught here — a caller past
+  /// the server's own 24h re-check gets a [PostgrestException] whose
+  /// `message` is pinned exactly by Story 1.4 to
+  /// `'Too close to the ride to cancel (within 24h).'`; the caller displays
+  /// that message directly (AD-3, AC #4) rather than this layer re-deriving
+  /// or paraphrasing it.
+  Future<void> cancelBooking(String requestId) async {
+    await supabase.rpc(
+      'cancel_request_driver',
+      params: {'p_request_id': requestId},
+    );
+  }
+
+  /// Story 3.4 Task 3's Mark complete action.
+  Future<void> completeRequest(String requestId) async {
+    await supabase.rpc(
+      'complete_request',
+      params: {'p_request_id': requestId},
+    );
   }
 }

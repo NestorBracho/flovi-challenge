@@ -1,6 +1,10 @@
+---
+baseline_commit: 7d4f06159158283478bfb1880aee2ebc9129e506
+---
+
 # Story 3.5: Deploy Driver Mobile to Vercel
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

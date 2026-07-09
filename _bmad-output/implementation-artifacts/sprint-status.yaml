@@ -83,9 +83,9 @@ development_status:
   epic-3: in-progress
   3-1-app-shell-design-tokens-login-role-claiming: review
   3-2-gigs-list-realtime-sync-booking-confirmation: review
-  3-3-booked-gigs-list: ready-for-dev
-  3-4-cancel-24h-rule-mark-complete: ready-for-dev
-  3-5-deploy-driver-mobile-to-vercel: ready-for-dev
+  3-3-booked-gigs-list: review
+  3-4-cancel-24h-rule-mark-complete: review
+  3-5-deploy-driver-mobile-to-vercel: in-progress
   epic-3-retrospective: optional
 
   epic-4: in-progress
