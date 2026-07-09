@@ -54,7 +54,9 @@
 #   across the two client apps.
 
 generated: 2026-07-08
-last_updated: 2026-07-08
+last_updated: 2026-07-09
+
+
 project: FloviChallenge
 project_key: NOKEY
 tracking_system: file-system
@@ -63,19 +65,19 @@ story_location: "{project-root}/_bmad-output/implementation-artifacts"
 development_status:
   epic-1: in-progress
   1-1-profiles-schema-role-claiming-rpc: review
-  1-2-relocation-request-schema-dispatcher-crud-cancellation: ready-for-dev
-  1-3-driver-visibility-booking-priority-mechanic: ready-for-dev
-  1-4-driver-cancellation-24h-cutoff-auto-reassignment-notifications: ready-for-dev
-  1-5-ride-completion-priority-count-increment: ready-for-dev
-  1-6-realtime-publication-seed-data-auth-configuration: ready-for-dev
+  1-2-relocation-request-schema-dispatcher-crud-cancellation: review
+  1-3-driver-visibility-booking-priority-mechanic: review
+  1-4-driver-cancellation-24h-cutoff-auto-reassignment-notifications: review
+  1-5-ride-completion-priority-count-increment: review
+  1-6-realtime-publication-seed-data-auth-configuration: review
   epic-1-retrospective: optional
 
   epic-2: in-progress
-  2-1-app-shell-design-tokens-login-role-claiming: ready-for-dev
-  2-2-requests-list-with-realtime-sync-search-filter: ready-for-dev
-  2-3-create-edit-request-via-modal: ready-for-dev
-  2-4-cancel-request-dispatcher-notifications: ready-for-dev
-  2-5-deploy-dispatcher-web-to-vercel: ready-for-dev
+  2-1-app-shell-design-tokens-login-role-claiming: review
+  2-2-requests-list-with-realtime-sync-search-filter: review
+  2-3-create-edit-request-via-modal: review
+  2-4-cancel-request-dispatcher-notifications: review
+  2-5-deploy-dispatcher-web-to-vercel: in-progress
   epic-2-retrospective: optional
 
   epic-3: in-progress

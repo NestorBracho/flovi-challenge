@@ -1,6 +1,10 @@
+---
+baseline_commit: 8156635488846a926831f34c9217625920246611
+---
+
 # Story 1.6: Realtime Publication, Seed Data & Auth Configuration
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -19,31 +23,31 @@ so that Epic 2 and Epic 3 can start against a fully working, demoable backend fr
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Realtime publication (AC: #1)
-  - [ ] `ALTER PUBLICATION supabase_realtime ADD TABLE public.relocation_requests, public.notifications;` (Supabase hosted projects already have a `supabase_realtime` publication provisioned by default — don't create a new one)
-  - [ ] Confirm `profiles` and `booking_bids` are **not** added — AD-5 is explicit that only these two tables are in the realtime contract
+- [x] Task 1 — Realtime publication (AC: #1)
+  - [x] `ALTER PUBLICATION supabase_realtime ADD TABLE public.relocation_requests, public.notifications;` (Supabase hosted projects already have a `supabase_realtime` publication provisioned by default — don't create a new one)
+  - [x] Confirm `profiles` and `booking_bids` are **not** added — AD-5 is explicit that only these two tables are in the realtime contract
 
-- [ ] Task 2 — Google OAuth: the two-layer redirect setup (AC: #3)
-  - [ ] Create (or reuse) one Google Cloud Console OAuth 2.0 Client. Its **Authorized redirect URIs** gets exactly **one** entry: Supabase's own fixed callback, `https://<project-ref>.supabase.co/auth/v1/callback` — this is Supabase's endpoint, not either app's. Do **not** put the apps' `/auth/callback` URLs here — see Dev Notes, this is the single easiest way to get this wrong.
-  - [ ] In Supabase Dashboard → Authentication → Providers → Google: paste that Client ID + Secret, enable the provider
-  - [ ] In Supabase Dashboard → Authentication → URL Configuration → Redirect URLs: add **both apps' local-dev** `/auth/callback` URLs now (this is the allow-list the apps' own `redirectTo` values must appear on) — `http://localhost:5173/auth/callback` (Vite's default port) and a **fixed** driver-mobile dev URL (see next subtask)
-  - [ ] Pick and fix a stable port for Flutter web dev now — e.g. always launch with `flutter run -d chrome --web-port=5000` — and register `http://localhost:5000/auth/callback` in the same Redirect URLs list. Flutter web's dev server otherwise picks a random port per run, which would silently break the registered redirect URL every single dev session if left unfixed.
-  - [ ] Leave a note for Stories 2.5/3.5: their production Vercel URLs' `/auth/callback` must be **added** to this same Supabase Redirect URLs list (not replace the local-dev ones) once each app is deployed
+- [x] Task 2 — Google OAuth: the two-layer redirect setup (AC: #3)
+  - [x] Create (or reuse) one Google Cloud Console OAuth 2.0 Client. Its **Authorized redirect URIs** gets exactly **one** entry: Supabase's own fixed callback, `https://<project-ref>.supabase.co/auth/v1/callback` — this is Supabase's endpoint, not either app's. Do **not** put the apps' `/auth/callback` URLs here — see Dev Notes, this is the single easiest way to get this wrong.
+  - [x] In Supabase Dashboard → Authentication → Providers → Google: paste that Client ID + Secret, enable the provider
+  - [x] In Supabase Dashboard → Authentication → URL Configuration → Redirect URLs: add **both apps' local-dev** `/auth/callback` URLs now (this is the allow-list the apps' own `redirectTo` values must appear on) — `http://localhost:5173/auth/callback` (Vite's default port) and a **fixed** driver-mobile dev URL (see next subtask)
+  - [x] Pick and fix a stable port for Flutter web dev now — e.g. always launch with `flutter run -d chrome --web-port=5000` — and register `http://localhost:5000/auth/callback` in the same Redirect URLs list. Flutter web's dev server otherwise picks a random port per run, which would silently break the registered redirect URL every single dev session if left unfixed.
+  - [x] Leave a note for Stories 2.5/3.5: their production Vercel URLs' `/auth/callback` must be **added** to this same Supabase Redirect URLs list (not replace the local-dev ones) once each app is deployed
 
-- [ ] Task 3 — Seed data (AC: #2)
-  - [ ] **Do not** hand-write `INSERT INTO auth.users (...)` rows directly in `seed.sql` — `profiles.id` is FK'd to `auth.users(id)`, but raw SQL inserts into `auth.users` are not a safe/supported pattern against a hosted (non-local) Supabase project (missing `auth.identities` rows, internal trigger/constraint fragility). Instead: create ~5 real auth users first via the Supabase Dashboard's "Add user" (Authentication → Users) or the Admin API (`supabase.auth.admin.createUser({ email, email_confirm: true })`), capture the returned UUIDs, then reference those literal UUIDs in `seed.sql`'s `profiles`/`relocation_requests` inserts.
-  - [ ] `seed.sql`: `INSERT INTO profiles (id, role, full_name, completed_rides_count) VALUES` for 2 dispatchers and 3+ drivers with **varying** `completed_rides_count` (e.g., 0, 3, 7) so the priority rule has something to rank
-  - [ ] `seed.sql`: `INSERT INTO relocation_requests (created_by, origin, destination, scheduled_date, notes) VALUES ...` for a handful of rows spanning unbooked/booked/completed. **This will not work as a single INSERT** — Story 1.2's `BEFORE INSERT` trigger unconditionally forces `status = 'unbooked'`/`driver_id = NULL` regardless of what the INSERT specifies (that's correct behavior for real client inserts, but it also neutralizes seed data). Follow every INSERT that needs a non-`unbooked` seed row with a separate `UPDATE relocation_requests SET status = '...', driver_id = '...' WHERE id = <the just-inserted row>` — this works because `seed.sql` runs via the SQL Editor as a privileged role, not as `authenticated`, so Story 1.2's column-level `REVOKE UPDATE ... FROM authenticated` doesn't apply to this session.
-  - [ ] **Document plainly (in this story's completion notes, and ideally as a comment atop `seed.sql`) that these seeded accounts can never actually sign in** — there's no real Google identity behind a Dashboard-created auth user, and CAP-1/CAP-5's *only* sign-in method is Google OAuth (no email/password flow exists anywhere in this project). The seeded data exists purely to populate the UI with variety and give the priority mechanic existing competitors to rank against — see Dev Notes for what this means for the actual demo.
+- [x] Task 3 — Seed data (AC: #2)
+  - [x] **Do not** hand-write `INSERT INTO auth.users (...)` rows directly in `seed.sql` — `profiles.id` is FK'd to `auth.users(id)`, but raw SQL inserts into `auth.users` are not a safe/supported pattern against a hosted (non-local) Supabase project (missing `auth.identities` rows, internal trigger/constraint fragility). Instead: create ~5 real auth users first via the Supabase Dashboard's "Add user" (Authentication → Users) or the Admin API (`supabase.auth.admin.createUser({ email, email_confirm: true })`), capture the returned UUIDs, then reference those literal UUIDs in `seed.sql`'s `profiles`/`relocation_requests` inserts.
+  - [x] `seed.sql`: `INSERT INTO profiles (id, role, full_name, completed_rides_count) VALUES` for 2 dispatchers and 3+ drivers with **varying** `completed_rides_count` (e.g., 0, 3, 7) so the priority rule has something to rank
+  - [x] `seed.sql`: `INSERT INTO relocation_requests (created_by, origin, destination, scheduled_date, notes) VALUES ...` for a handful of rows spanning unbooked/booked/completed. **This will not work as a single INSERT** — Story 1.2's `BEFORE INSERT` trigger unconditionally forces `status = 'unbooked'`/`driver_id = NULL` regardless of what the INSERT specifies (that's correct behavior for real client inserts, but it also neutralizes seed data). Follow every INSERT that needs a non-`unbooked` seed row with a separate `UPDATE relocation_requests SET status = '...', driver_id = '...' WHERE id = <the just-inserted row>` — this works because `seed.sql` runs via the SQL Editor as a privileged role, not as `authenticated`, so Story 1.2's column-level `REVOKE UPDATE ... FROM authenticated` doesn't apply to this session.
+  - [x] **Document plainly (in this story's completion notes, and ideally as a comment atop `seed.sql`) that these seeded accounts can never actually sign in** — there's no real Google identity behind a Dashboard-created auth user, and CAP-1/CAP-5's *only* sign-in method is Google OAuth (no email/password flow exists anywhere in this project). The seeded data exists purely to populate the UI with variety and give the priority mechanic existing competitors to rank against — see Dev Notes for what this means for the actual demo.
 
-- [ ] Task 4 — Key hygiene (AC: #4)
-  - [ ] Confirm both apps' env config (`.env`/build-time config for Vite and Flutter) references only the Supabase URL + anon key
-  - [ ] Confirm the service-role key appears nowhere in the repo at all — there's no legitimate place for it to live in this architecture (AD-1: no custom backend service exists; both apps are pure client bundles), so this is a non-issue as long as no one pastes it into a client env file out of habit
+- [x] Task 4 — Key hygiene (AC: #4)
+  - [x] Confirm both apps' env config (`.env`/build-time config for Vite and Flutter) references only the Supabase URL + anon key
+  - [x] Confirm the service-role key appears nowhere in the repo at all — there's no legitimate place for it to live in this architecture (AD-1: no custom backend service exists; both apps are pure client bundles), so this is a non-issue as long as no one pastes it into a client env file out of habit
 
-- [ ] Task 5 — Verification (AC: all)
-  - [ ] Confirm the realtime publication change via `SELECT * FROM pg_publication_tables WHERE pubname = 'supabase_realtime';` → exactly `relocation_requests` and `notifications`
-  - [ ] Run `seed.sql` against the live project, confirm the expected row counts and status variety land correctly (including that the INSERT-then-UPDATE actually produces `booked`/`completed` rows, not silently-reverted `unbooked` ones)
-  - [ ] Full end-to-end OAuth verification (an actual sign-in completing through both layers) can't fully happen yet — no login screen exists until Stories 2.1/3.1. This story's verification is limited to confirming the dashboard/console configuration is saved correctly; treat Stories 2.1/3.1 as the real proof this worked.
+- [x] Task 5 — Verification (AC: all)
+  - [x] Confirm the realtime publication change via `SELECT * FROM pg_publication_tables WHERE pubname = 'supabase_realtime';` → exactly `relocation_requests` and `notifications`
+  - [x] Run `seed.sql` against the live project, confirm the expected row counts and status variety land correctly (including that the INSERT-then-UPDATE actually produces `booked`/`completed` rows, not silently-reverted `unbooked` ones)
+  - [x] Full end-to-end OAuth verification (an actual sign-in completing through both layers) can't fully happen yet — no login screen exists until Stories 2.1/3.1. This story's verification is limited to confirming the dashboard/console configuration is saved correctly; treat Stories 2.1/3.1 as the real proof this worked.
 
 ## Dev Notes
 
@@ -85,10 +89,26 @@ No new migration file in this story — no new schema, only publication/seed/con
 
 ### Agent Model Used
 
-_To be filled by dev agent during implementation._
+Claude Sonnet 5 (claude-sonnet-5)
 
 ### Debug Log References
 
+- Executed all live-project steps via Chrome browser automation against the Supabase Dashboard (project `flovi-challenge`, ref `vruhkfrlwqdznowukwio`) and Google Cloud Console (project `api-project-331353254024`), both already owned/logged-into by the operator. No credentials were entered by the agent at any point — the operator signed into Google/Supabase themselves, created the 5 demo `auth.users` accounts themselves via the Dashboard's "Add user" form (password field), and pasted the Google OAuth Client Secret into Supabase's provider config themselves. The agent handled all non-secret navigation, field entry, and SQL execution.
+
 ### Completion Notes List
 
+- **Task 1 (realtime publication):** Ran `ALTER PUBLICATION supabase_realtime ADD TABLE public.relocation_requests, public.notifications;` directly via the Supabase SQL Editor against the live project (no migration file, per this story's Project Structure Notes — publication changes aren't schema). Verified via `pg_publication_tables`: baseline was 0 tables in the publication; after the ALTER, exactly `notifications` and `relocation_requests` are present — `profiles` and `booking_bids` are correctly absent (AD-5, AC #1 satisfied).
+- **Task 2 (Google OAuth):** Created one Google Cloud Console OAuth 2.0 Client (Web application type, project `api-project-331353254024`, reused rather than a fresh GCP project) with its Authorized redirect URIs set to exactly one entry — `https://vruhkfrlwqdznowukwio.supabase.co/auth/v1/callback` (Supabase's own fixed endpoint, not either app's URL — the Dev Notes' "most common way to break this" was avoided). The OAuth consent screen was configured first (required prerequisite, wasn't previously set up on this GCP project) as External audience, since the operator's demo plan requires multiple personal Google accounts rather than a single Workspace org. Pasted the resulting Client ID into Supabase Dashboard → Authentication → Providers → Google (agent-entered, non-sensitive) and enabled the provider; the Client Secret was pasted by the operator directly (agent does not handle secrets/tokens). Added both apps' local-dev callback URLs to Supabase's Redirect URLs allow-list: `http://localhost:5173/auth/callback` (Vite default port) and `http://localhost:5000/auth/callback` (fixed Flutter web dev port per this story's Dev Notes — Story 3.1 must launch with `flutter run -d chrome --web-port=5000` to match). AC #3 satisfied at the configuration level; full end-to-end sign-in is deferred to Stories 2.1/3.1 as this story's own scope anticipates. **Note for Stories 2.5/3.5:** once each app deploys to Vercel, its production `/auth/callback` URL must be *added* to this same Supabase Redirect URLs list (not replace the local-dev entries).
+- **Task 3 (seed data):** Created 5 real `auth.users` accounts via Supabase Dashboard → Authentication → Users → "Add user" (operator-entered password, auto-confirmed) — `demo.dispatcher1@flovi.test`, `demo.dispatcher2@flovi.test`, `demo.drivera@flovi.test`, `demo.driverb@flovi.test`, `demo.driverc@flovi.test`. Captured their UUIDs via SQL Editor and hardcoded them as literal constants in `flovi/supabase/seed.sql`. **Important discovery beyond what the story anticipated:** the `relocation_requests_before_insert` trigger (Story 1.2) sets `created_by := auth.uid()` unconditionally, and `auth.uid()` resolves to `NULL` when a script runs as the `postgres` role in the SQL Editor (no JWT) — this fails the column's NOT NULL constraint even for a plain unbooked insert, not just the booked/completed rows the story's Dev Notes anticipated needing an INSERT-then-UPDATE workaround for. Fixed by calling `select set_config('request.jwt.claim.sub', '<dispatcher-uuid>', true);` immediately before each relocation_requests insert, simulating the intended dispatcher as caller — the same technique Stories 1.4/1.5 used for `auth.uid()` simulation during verification. `seed.sql` now documents this inline. Ran the corrected script against the live project: 5 profiles (2 dispatchers at 0 rides, 3 drivers at 0/3/7 completed rides) and 5 relocation_requests (2 unbooked, 2 booked, 1 completed) landed exactly as designed, confirmed via `GROUP BY status` and a full profiles query. **These seeded accounts can never actually sign in** — Google OAuth is the only auth path in this project and none of these `auth.users` rows have a real Google identity behind them; this is documented atop `seed.sql` itself and reiterated here per the story's explicit instruction. For the actual live demo, the operator needs 2–3 of their own real Google accounts to play the competing-drivers role (see Dev Notes).
+- **Task 4 (key hygiene):** Grepped the full repo for `service_role`/`SERVICE_ROLE` — zero matches. No `.env*` files exist anywhere in the repo yet (both `dispatcher-web` and `driver-mobile` are still unmodified framework scaffolds; Epics 2/3 haven't started), so there is currently no client bundle to audit for key placement — this task is trivially satisfied now, and the real check happens when Stories 2.1/3.1 introduce env config.
+- **Task 5 (verification):** Covered inline above — realtime publication confirmed via direct query, seed data row counts/status variety confirmed via direct query, OAuth dashboard/console configuration confirmed saved (Google provider shows "Enabled" in Supabase, redirect URIs saved on both sides). Full end-to-end OAuth sign-in is out of this story's scope per its own Task 5 wording.
+
 ### File List
+
+- `flovi/supabase/seed.sql` (rewritten — profiles + relocation_requests seed data, with `set_config`-based `auth.uid()` simulation to satisfy the `created_by` trigger)
+- Live Supabase project changes (not repo files): `supabase_realtime` publication now includes `relocation_requests` + `notifications`; 5 `auth.users`/`profiles` rows + 5 `relocation_requests` rows seeded; Google OAuth provider enabled with Client ID/Secret; Redirect URLs allow-list updated with both apps' local-dev callback URLs
+- Live Google Cloud Console changes (not repo files): OAuth consent screen configured (External audience) on the `api-project-331353254024` project; one Web application OAuth 2.0 Client created (`FloviChallenge Supabase`) with Supabase's callback as its sole Authorized redirect URI
+
+## Change Log
+
+- 2026-07-09 — Implemented Story 1.6 in full: realtime publication now covers exactly `relocation_requests`/`notifications`; Google OAuth configured end-to-end (Google Cloud Console client + Supabase provider + Redirect URLs allow-list); `seed.sql` rewritten with 5 real auth users, 5 profiles, and 5 relocation_requests across all three statuses, including a fix for an `auth.uid()`/`created_by` trigger interaction not anticipated in the original task breakdown. Key hygiene confirmed clean (no service-role key in repo; no env files exist yet). All 5 tasks complete; all 4 ACs verified against the live project to the extent this story's own scope allows. Status → review.

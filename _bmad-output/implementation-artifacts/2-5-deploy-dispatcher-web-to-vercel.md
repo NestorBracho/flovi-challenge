@@ -1,6 +1,10 @@
+---
+baseline_commit: 8156635488846a926831f34c9217625920246611
+---
+
 # Story 2.5: Deploy Dispatcher Web to Vercel
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

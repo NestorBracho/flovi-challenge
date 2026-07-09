@@ -1,6 +1,10 @@
+---
+baseline_commit: 8156635488846a926831f34c9217625920246611
+---
+
 # Story 1.3: Driver Visibility & Booking Priority Mechanic
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -22,33 +26,33 @@ so that the highest-priority driver reliably wins concurrent booking attempts.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — `booking_bids` table + `driver_visibility` policy (AC: #1, #2, #3)
-  - [ ] New migration `supabase/migrations/<ts3>_create_booking_bids.sql` (timestamped after Story 1.2's), columns exactly per AC #3: `id uuid PK default gen_random_uuid()`, `request_id uuid FK → relocation_requests(id)`, `driver_id uuid FK → profiles(id)`, `bid_at timestamptz default now()`. Enable RLS.
-  - [ ] Append to `supabase/policies.sql`: `driver_visibility` **as a `FOR SELECT` policy only** — `USING ((SELECT role FROM profiles WHERE id = auth.uid()) = 'driver' AND (status = 'unbooked' OR driver_id = auth.uid()))`. **Do not** define this `FOR ALL`, even though `dispatcher_own` (Story 1.2) was — see Dev Notes, this is a real leak risk, not a style choice.
-  - [ ] Append a second policy to `policies.sql`: `booking_bids` INSERT-only policy for drivers — `WITH CHECK ((SELECT role FROM profiles WHERE id = auth.uid()) = 'driver' AND driver_id = auth.uid())`. No SELECT/UPDATE/DELETE policy on `booking_bids` for `authenticated` — only `book_request` (as owner) ever reads/deletes it.
-  - [ ] `GRANT INSERT ON booking_bids TO authenticated;` — no SELECT/UPDATE/DELETE grant to `authenticated`.
+- [x] Task 1 — `booking_bids` table + `driver_visibility` policy (AC: #1, #2, #3)
+  - [x] New migration `supabase/migrations/<ts3>_create_booking_bids.sql` (timestamped after Story 1.2's), columns exactly per AC #3: `id uuid PK default gen_random_uuid()`, `request_id uuid FK → relocation_requests(id)`, `driver_id uuid FK → profiles(id)`, `bid_at timestamptz default now()`. Enable RLS.
+  - [x] Append to `supabase/policies.sql`: `driver_visibility` **as a `FOR SELECT` policy only** — `USING ((SELECT role FROM profiles WHERE id = auth.uid()) = 'driver' AND (status = 'unbooked' OR driver_id = auth.uid()))`. **Do not** define this `FOR ALL`, even though `dispatcher_own` (Story 1.2) was — see Dev Notes, this is a real leak risk, not a style choice.
+  - [x] Append a second policy to `policies.sql`: `booking_bids` INSERT-only policy for drivers — `WITH CHECK ((SELECT role FROM profiles WHERE id = auth.uid()) = 'driver' AND driver_id = auth.uid())`. No SELECT/UPDATE/DELETE policy on `booking_bids` for `authenticated` — only `book_request` (as owner) ever reads/deletes it.
+  - [x] `GRANT INSERT ON booking_bids TO authenticated;` — no SELECT/UPDATE/DELETE grant to `authenticated`.
 
-- [ ] Task 2 — `book_request` RPC: role check, bid window, lock (AC: #3, #4, #7)
-  - [ ] Append to `supabase/functions.sql`. `SECURITY DEFINER`, `SET search_path = public`, parameter named `p_request_id uuid` (continuing the naming convention pinned in Story 1.2)
-  - [ ] First statement: resolve caller's `profiles.role`; if not `driver`, `RAISE EXCEPTION` (AC #7) — do this before touching `relocation_requests` or sleeping, so a wrong-role caller fails fast
-  - [ ] `PERFORM pg_sleep(0.3);` — the bid window (see Dev Notes for why the *client*, not this function, does the actual bid insert)
-  - [ ] `SELECT status, driver_id FROM relocation_requests WHERE id = p_request_id FOR UPDATE` — if no row found, `RAISE EXCEPTION` ("request not found," defensive, not explicitly in an AC)
+- [x] Task 2 — `book_request` RPC: role check, bid window, lock (AC: #3, #4, #7)
+  - [x] Append to `supabase/functions.sql`. `SECURITY DEFINER`, `SET search_path = public`, parameter named `p_request_id uuid` (continuing the naming convention pinned in Story 1.2)
+  - [x] First statement: resolve caller's `profiles.role`; if not `driver`, `RAISE EXCEPTION` (AC #7) — do this before touching `relocation_requests` or sleeping, so a wrong-role caller fails fast
+  - [x] `PERFORM pg_sleep(0.3);` — the bid window (see Dev Notes for why the *client*, not this function, does the actual bid insert)
+  - [x] `SELECT status, driver_id FROM relocation_requests WHERE id = p_request_id FOR UPDATE` — if no row found, `RAISE EXCEPTION` ("request not found," defensive, not explicitly in an AC)
 
-- [ ] Task 3 — Decision branch: assign the winner (AC: #4, #5)
-  - [ ] If the locked row's `status = 'unbooked'`: this caller is the decider. First, `INSERT INTO booking_bids (request_id, driver_id) VALUES (p_request_id, auth.uid()) ON CONFLICT DO NOTHING` as an idempotent safety-net (guards against the empty-bids edge case — see Dev Notes)
-  - [ ] `SELECT bb.driver_id FROM booking_bids bb JOIN profiles p ON p.id = bb.driver_id WHERE bb.request_id = p_request_id ORDER BY p.completed_rides_count DESC, bb.bid_at ASC LIMIT 1` → this is the winner
-  - [ ] `UPDATE relocation_requests SET driver_id = <winner>, status = 'booked' WHERE id = p_request_id`
-  - [ ] `DELETE FROM booking_bids WHERE request_id = p_request_id` — resets the ledger so a future rebooking round (e.g., after Story 1.4's revert-to-`unbooked` path) doesn't see stale bids from this round
-  - [ ] Return `winner = auth.uid()` as the boolean result
+- [x] Task 3 — Decision branch: assign the winner (AC: #4, #5)
+  - [x] If the locked row's `status = 'unbooked'`: this caller is the decider. First, `INSERT INTO booking_bids (request_id, driver_id) VALUES (p_request_id, auth.uid()) ON CONFLICT DO NOTHING` as an idempotent safety-net (guards against the empty-bids edge case — see Dev Notes)
+  - [x] `SELECT bb.driver_id FROM booking_bids bb JOIN profiles p ON p.id = bb.driver_id WHERE bb.request_id = p_request_id ORDER BY p.completed_rides_count DESC, bb.bid_at ASC LIMIT 1` → this is the winner
+  - [x] `UPDATE relocation_requests SET driver_id = <winner>, status = 'booked' WHERE id = p_request_id`
+  - [x] `DELETE FROM booking_bids WHERE request_id = p_request_id` — resets the ledger so a future rebooking round (e.g., after Story 1.4's revert-to-`unbooked` path) doesn't see stale bids from this round
+  - [x] Return `winner = auth.uid()` as the boolean result
 
-- [ ] Task 4 — Non-decider / not-available branch (AC: #5, #6)
-  - [ ] If the locked row's `status <> 'unbooked'` (someone else already decided, or it was never open — covers both AC #5's loser and AC #6's already-closed case): compare the row's current `driver_id` to `auth.uid()` and return that boolean — no assignment logic runs, no state change
+- [x] Task 4 — Non-decider / not-available branch (AC: #5, #6)
+  - [x] If the locked row's `status <> 'unbooked'` (someone else already decided, or it was never open — covers both AC #5's loser and AC #6's already-closed case): compare the row's current `driver_id` to `auth.uid()` and return that boolean — no assignment logic runs, no state change
 
-- [ ] Task 5 — Manual verification (AC: all)
-  - [ ] Single-driver path: driver with an existing bid inserted, call `book_request` on an `unbooked` row solo → becomes decider, wins, row is `booked`
-  - [ ] Concurrent path (needs 2 driver test accounts with *different* `completed_rides_count` — seed data isn't populated until Story 1.6, so create two ad-hoc `profiles` rows for this test if needed): from two separate sessions, INSERT both bids first, then fire both `book_request` calls within the same ~300ms window (e.g., two terminal tabs issuing the calls back-to-back) → higher-`completed_rides_count` driver wins regardless of which call happened to reach the RPC first
-  - [ ] Call `book_request` on an already-`booked`/`completed`/`cancelled` row → `false`/not-available, no state change
-  - [ ] Call `book_request` as a dispatcher-role caller → exception raised
+- [x] Task 5 — Manual verification (AC: all)
+  - [x] Single-driver path: driver with an existing bid inserted, call `book_request` on an `unbooked` row solo → becomes decider, wins, row is `booked`
+  - [x] Concurrent path (needs 2 driver test accounts with *different* `completed_rides_count` — seed data isn't populated until Story 1.6, so create two ad-hoc `profiles` rows for this test if needed): from two separate sessions, INSERT both bids first, then fire both `book_request` calls within the same ~300ms window (e.g., two terminal tabs issuing the calls back-to-back) → higher-`completed_rides_count` driver wins regardless of which call happened to reach the RPC first
+  - [x] Call `book_request` on an already-`booked`/`completed`/`cancelled` row → `false`/not-available, no state change
+  - [x] Call `book_request` as a dispatcher-role caller → exception raised
 
 ## Dev Notes
 
@@ -102,10 +106,22 @@ supabase/
 
 ### Agent Model Used
 
-_To be filled by dev agent during implementation._
+Claude Sonnet 5 (claude-sonnet-5)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented the `booking_bids` table (migration `20260708190932_create_booking_bids.sql`), the `driver_visibility` FOR-SELECT-only policy and `booking_bids_insert_own` INSERT-only policy (appended to `policies.sql`), and the `book_request` SECURITY DEFINER RPC (appended to `functions.sql`), all exactly per the Tasks/Subtasks breakdown and Dev Notes' split-insert design (client inserts its own bid row directly; `book_request` only sleeps, locks, and decides).
+- Manual verification (Task 5) was run directly against the user's live Supabase Postgres instance via `psql`, using a connection string supplied by the user for this session only (deleted from local scratch storage after use). Three throwaway `auth.users`/`profiles` rows (one dispatcher, two drivers with `completed_rides_count` 2 and 10) and three throwaway `relocation_requests` rows were inserted directly via superuser SQL, then sessions were simulated per-role with `SET LOCAL ROLE authenticated` + `set_config('request.jwt.claim.sub', ...)` to exercise RLS/`auth.uid()` exactly as PostgREST would. All test data was deleted after verification; no residual data left in the project.
+- All ACs verified end-to-end on the first attempt: AC #1/#2 (`driver_visibility` — each driver's `SELECT` returned exactly the unbooked pool row plus their own booked row, never the other driver's booked row), AC #3 (`booking_bids` table and `book_request` RPC exist as specified), AC #4 (solo driver bid → decider → `won = true`, row `booked`, bid ledger cleared to 0 rows), AC #5 (two drivers' bids inserted — lower-count driver bid first, higher-count driver bid ~300ms later — both `book_request` calls fired concurrently via backgrounded `psql` processes; the higher-`completed_rides_count` driver won regardless of bid/call order, loser's call returned `false`), AC #6 (calling `book_request` on the now-`booked` row returned `false` with zero state change), AC #7 (dispatcher-role caller got `RAISE EXCEPTION: book_request requires the caller to be a driver`, transaction rolled back). Also verified as a bonus negative check (not a numbered AC, but part of Task 1's policy intent) that a driver cannot `INSERT` a `booking_bids` row on another driver's behalf — RLS correctly rejected it.
+
 ### File List
+
+- `flovi/supabase/migrations/20260708190932_create_booking_bids.sql` (new — `booking_bids` table, RLS enable, INSERT-only grant)
+- `flovi/supabase/policies.sql` (modified — appended `driver_visibility` and `booking_bids_insert_own` policies)
+- `flovi/supabase/functions.sql` (modified — appended `book_request` RPC)
+
+## Change Log
+
+- 2026-07-08 — Implemented Story 1.3 in full: `booking_bids` schema, `driver_visibility` FOR-SELECT-only RLS policy, `booking_bids_insert_own` INSERT-only RLS policy, `book_request` SECURITY DEFINER RPC implementing the split-insert priority-bid mechanic. All 5 tasks complete, all 7 ACs manually verified against the live Supabase project (including the concurrent-tiebreak path via two backgrounded `psql` sessions). Status → review.

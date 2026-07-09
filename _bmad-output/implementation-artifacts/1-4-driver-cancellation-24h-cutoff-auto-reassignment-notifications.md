@@ -1,6 +1,10 @@
+---
+baseline_commit: 8156635488846a926831f34c9217625920246611
+---
+
 # Story 1.4: Driver Cancellation, 24h Cutoff, Auto-Reassignment & Notifications
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -20,35 +24,35 @@ so that late cancellations don't strand a scheduled ride and dispatchers learn a
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — `notifications` table migration + full RLS/grant surface (AC: #4)
-  - [ ] New migration `supabase/migrations/<ts4>_create_notifications.sql`, columns exactly per AC #4; `created_at default now()`, `read_at` nullable no default
-  - [ ] Enable RLS. Append to `policies.sql`: one `FOR ALL` policy (name it `dispatcher_own_notifications`) — `USING (dispatcher_id = auth.uid()) WITH CHECK (dispatcher_id = auth.uid())`
-  - [ ] `GRANT SELECT ON notifications TO authenticated;`
-  - [ ] `REVOKE UPDATE ON notifications FROM authenticated;` then `GRANT UPDATE (read_at) ON notifications TO authenticated;` — **build this now even though no AC in this story exercises it.** Story 2.4 (Epic 2) needs to mark visible unread notifications read via a direct client-side `UPDATE notifications SET read_at = now() WHERE ...`, and per AD-1/the architecture's design paradigm, Epic 2 has zero domain logic of its own — it can only call what Epic 1 already exposed. If this grant/policy isn't in place now, Story 2.4 hits a dead end it has no authority to fix itself.
-  - [ ] No INSERT/DELETE grant to `authenticated` at all — only `cancel_request_driver` (as owner) ever inserts a notification
+- [x] Task 1 — `notifications` table migration + full RLS/grant surface (AC: #4)
+  - [x] New migration `supabase/migrations/<ts4>_create_notifications.sql`, columns exactly per AC #4; `created_at default now()`, `read_at` nullable no default
+  - [x] Enable RLS. Append to `policies.sql`: one `FOR ALL` policy (name it `dispatcher_own_notifications`) — `USING (dispatcher_id = auth.uid()) WITH CHECK (dispatcher_id = auth.uid())`
+  - [x] `GRANT SELECT ON notifications TO authenticated;`
+  - [x] `REVOKE UPDATE ON notifications FROM authenticated;` then `GRANT UPDATE (read_at) ON notifications TO authenticated;` — **build this now even though no AC in this story exercises it.** Story 2.4 (Epic 2) needs to mark visible unread notifications read via a direct client-side `UPDATE notifications SET read_at = now() WHERE ...`, and per AD-1/the architecture's design paradigm, Epic 2 has zero domain logic of its own — it can only call what Epic 1 already exposed. If this grant/policy isn't in place now, Story 2.4 hits a dead end it has no authority to fix itself.
+  - [x] No INSERT/DELETE grant to `authenticated` at all — only `cancel_request_driver` (as owner) ever inserts a notification
 
-- [ ] Task 2 — `cancel_request_driver` RPC: checks and locking (AC: #1, #2, #5)
-  - [ ] Append to `supabase/functions.sql`. `SECURITY DEFINER`, `SET search_path = public`, parameter `p_request_id uuid` (continuing the established convention)
-  - [ ] Verify caller's `profiles.role = 'driver'`, else `RAISE EXCEPTION` (AC #5)
-  - [ ] `SELECT status, driver_id, scheduled_date, created_by FROM relocation_requests WHERE id = p_request_id FOR UPDATE` — lock the row before any decision (defends against a concurrent `cancel_request_dispatcher`/`complete_request` call racing this one)
-  - [ ] Verify `driver_id = auth.uid()` on the locked row, else `RAISE EXCEPTION` (AC #5). Also verify `status = 'booked'` — defensive, not explicitly in an AC, but needed if the dispatcher cancelled R a moment earlier and the driver's client still shows it as their booked gig (stale realtime lag)
-  - [ ] Compute the cutoff (see Dev Notes for the exact, timezone-safe form) and compare to `now()`; if `now() >= cutoff`, `RAISE EXCEPTION` with message text **exactly** `'Too close to the ride to cancel (within 24h).'` — no further statements execute (AC #2 — status/driver_id must stay untouched). The exact wording matters here, not just the fact of raising: per AD-3, an RPC failure's exception message is meant to map 1:1 to the client's displayed copy — Story 3.4 (driver-mobile) will catch this exception and display its message directly rather than maintaining a separate hardcoded copy of its own, so a mismatched or paraphrased message here would surface as wrong-looking UI text three stories later with no error to flag it
+- [x] Task 2 — `cancel_request_driver` RPC: checks and locking (AC: #1, #2, #5)
+  - [x] Append to `supabase/functions.sql`. `SECURITY DEFINER`, `SET search_path = public`, parameter `p_request_id uuid` (continuing the established convention)
+  - [x] Verify caller's `profiles.role = 'driver'`, else `RAISE EXCEPTION` (AC #5)
+  - [x] `SELECT status, driver_id, scheduled_date, created_by FROM relocation_requests WHERE id = p_request_id FOR UPDATE` — lock the row before any decision (defends against a concurrent `cancel_request_dispatcher`/`complete_request` call racing this one)
+  - [x] Verify `driver_id = auth.uid()` on the locked row, else `RAISE EXCEPTION` (AC #5). Also verify `status = 'booked'` — defensive, not explicitly in an AC, but needed if the dispatcher cancelled R a moment earlier and the driver's client still shows it as their booked gig (stale realtime lag)
+  - [x] Compute the cutoff (see Dev Notes for the exact, timezone-safe form) and compare to `now()`; if `now() >= cutoff`, `RAISE EXCEPTION` with message text **exactly** `'Too close to the ride to cancel (within 24h).'` — no further statements execute (AC #2 — status/driver_id must stay untouched). The exact wording matters here, not just the fact of raising: per AD-3, an RPC failure's exception message is meant to map 1:1 to the client's displayed copy — Story 3.4 (driver-mobile) will catch this exception and display its message directly rather than maintaining a separate hardcoded copy of its own, so a mismatched or paraphrased message here would surface as wrong-looking UI text three stories later with no error to flag it
 
-- [ ] Task 3 — Reassignment/revert decision (AC: #1)
-  - [ ] `SELECT id FROM profiles WHERE role = 'driver' AND is_active = true AND id <> auth.uid() ORDER BY completed_rides_count DESC, id ASC LIMIT 1` — `id ASC` is an arbitrary-but-deterministic tiebreak (no `bid_at`-equivalent exists for reassignment, and `profiles` has no `created_at` column to break ties on instead — see Dev Notes)
-  - [ ] If a row is found: `UPDATE relocation_requests SET driver_id = <found id> WHERE id = p_request_id` — `status` stays `'booked'`, only `driver_id` changes
-  - [ ] If no row is found: `UPDATE relocation_requests SET status = 'unbooked', driver_id = NULL WHERE id = p_request_id`
+- [x] Task 3 — Reassignment/revert decision (AC: #1)
+  - [x] `SELECT id FROM profiles WHERE role = 'driver' AND is_active = true AND id <> auth.uid() ORDER BY completed_rides_count DESC, id ASC LIMIT 1` — `id ASC` is an arbitrary-but-deterministic tiebreak (no `bid_at`-equivalent exists for reassignment, and `profiles` has no `created_at` column to break ties on instead — see Dev Notes)
+  - [x] If a row is found: `UPDATE relocation_requests SET driver_id = <found id> WHERE id = p_request_id` — `status` stays `'booked'`, only `driver_id` changes
+  - [x] If no row is found: `UPDATE relocation_requests SET status = 'unbooked', driver_id = NULL WHERE id = p_request_id`
 
-- [ ] Task 4 — Notification message (AC: #3)
-  - [ ] Use the **exact fixed microcopy template from EXPERIENCE.md** (not a paraphrase — see Dev Notes for the verbatim source): reassigned → `'{cancelling_driver_full_name} cancelled a gig — automatically reassigned to {new_driver_full_name}.'`; reverted → `'{cancelling_driver_full_name} cancelled a gig — returned to the available pool.'`
-  - [ ] Look up both full names from `profiles` (cancelling driver = `auth.uid()`'s own row; new driver = the row found in Task 3, if any)
-  - [ ] `INSERT INTO notifications (request_id, dispatcher_id, message) VALUES (p_request_id, <R's created_by, captured in Task 2's locked SELECT>, <message>)`
+- [x] Task 4 — Notification message (AC: #3)
+  - [x] Use the **exact fixed microcopy template from EXPERIENCE.md** (not a paraphrase — see Dev Notes for the verbatim source): reassigned → `'{cancelling_driver_full_name} cancelled a gig — automatically reassigned to {new_driver_full_name}.'`; reverted → `'{cancelling_driver_full_name} cancelled a gig — returned to the available pool.'`
+  - [x] Look up both full names from `profiles` (cancelling driver = `auth.uid()`'s own row; new driver = the row found in Task 3, if any)
+  - [x] `INSERT INTO notifications (request_id, dispatcher_id, message) VALUES (p_request_id, <R's created_by, captured in Task 2's locked SELECT>, <message>)`
 
-- [ ] Task 5 — Manual verification (AC: all)
-  - [ ] As the assigned driver, cancel a booked request with `scheduled_date` ≥25h out → succeeds; if another active driver with higher `completed_rides_count` exists, they're assigned and a notification with the "automatically reassigned to X" wording appears for the dispatcher; if no other active driver exists, R reverts to `unbooked` and the notification reads "returned to the available pool"
-  - [ ] Same request but `scheduled_date` within 24h → blocked, no state change, no notification created
-  - [ ] As a non-assigned driver, or as a dispatcher, call `cancel_request_driver` on someone else's booked request → exception, no state change
-  - [ ] As the dispatcher who owns R, confirm the new `notifications` row is visible via SELECT (RLS), and confirm a direct `UPDATE notifications SET read_at = now() WHERE id = ...` succeeds (proving Task 1's forward-looking grant actually works, even though no story yet calls it from a UI)
+- [x] Task 5 — Manual verification (AC: all)
+  - [x] As the assigned driver, cancel a booked request with `scheduled_date` ≥25h out → succeeds; if another active driver with higher `completed_rides_count` exists, they're assigned and a notification with the "automatically reassigned to X" wording appears for the dispatcher; if no other active driver exists, R reverts to `unbooked` and the notification reads "returned to the available pool"
+  - [x] Same request but `scheduled_date` within 24h → blocked, no state change, no notification created
+  - [x] As a non-assigned driver, or as a dispatcher, call `cancel_request_driver` on someone else's booked request → exception, no state change
+  - [x] As the dispatcher who owns R, confirm the new `notifications` row is visible via SELECT (RLS), and confirm a direct `UPDATE notifications SET read_at = now() WHERE id = ...` succeeds (proving Task 1's forward-looking grant actually works, even though no story yet calls it from a UI)
 
 ## Dev Notes
 
@@ -100,10 +104,23 @@ supabase/
 
 ### Agent Model Used
 
-_To be filled by dev agent during implementation._
+Claude Sonnet 5 (claude-sonnet-5)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Implemented the `notifications` table (migration `20260708192145_create_notifications.sql`, columns exactly per AC #4), the `dispatcher_own_notifications` FOR ALL policy (appended to `policies.sql`), and the `cancel_request_driver` SECURITY DEFINER RPC (appended to `functions.sql`), all exactly per the Tasks/Subtasks breakdown and Dev Notes' timezone-safe cutoff formula and verbatim microcopy templates.
+- `notifications` grants: `SELECT` open to `authenticated` (RLS-scoped), column-level `UPDATE (read_at)` only (forward-looking grant for Story 2.4, per Task 1), and `INSERT`/`DELETE` both explicitly revoked since Supabase's platform-level default privileges otherwise grant them — only `cancel_request_driver` (as owner) ever inserts a row.
+- Manual verification (Task 5) was run directly against the user's live Supabase Postgres instance via `psql`, using a connection string supplied by the user for this session only (not written to any file, not retained after use). Six throwaway `auth.users`/`profiles` rows (one dispatcher, four drivers with varying `completed_rides_count`/`is_active` combinations, one solo canceller) and three throwaway `relocation_requests` rows (pre-set to `booked` by temporarily disabling the `relocation_requests_before_insert` trigger, since it forces `unbooked`/`null driver_id` on every INSERT) were used; RLS-scoped sessions were simulated per-role with `SET LOCAL ROLE authenticated` + `set_config('request.jwt.claim.sub', ...)` to exercise `auth.uid()` exactly as PostgREST would. All test data was deleted after verification (confirmed zero residue); no changes were left in the project's live schema beyond this story's migration/RPC/policy.
+- All ACs verified end-to-end: AC #1 reassignment path (driver cancelled a request ≥25h out; highest-`completed_rides_count` **active** driver was assigned, correctly excluding a higher-count but `is_active = false` driver — status stayed `booked`) and revert path (no other active driver eligible → `status = 'unbooked'`, `driver_id = NULL`); AC #2 (cancellation attempt on a request scheduled for "today" raised exactly `'Too close to the ride to cancel (within 24h).'` with zero state change and zero notification); AC #3 (notification message text matched the EXPERIENCE.md microcopy verbatim, byte-for-byte diffed against the story's template — including the em dash — for both the reassigned and reverted cases); AC #4 (`notifications` table exists with the RLS policy scoping `SELECT` to `dispatcher_id = auth.uid()` — confirmed a driver role saw zero rows — and the `read_at` `UPDATE` grant succeeded for the owning dispatcher); AC #5 (a non-owning driver got `'caller does not own relocation request %'`, and a dispatcher-role caller got `'cancel_request_driver requires the caller to be a driver'`, both with zero state change).
+
 ### File List
+
+- `flovi/supabase/migrations/20260708192145_create_notifications.sql` (new — `notifications` table, RLS enable, SELECT/column-scoped UPDATE grants, explicit INSERT/DELETE revokes)
+- `flovi/supabase/policies.sql` (modified — appended `dispatcher_own_notifications` policy)
+- `flovi/supabase/functions.sql` (modified — appended `cancel_request_driver` RPC)
+
+## Change Log
+
+- 2026-07-08 — Implemented Story 1.4 in full: `notifications` schema, `dispatcher_own_notifications` RLS policy (including the forward-looking `read_at` update grant for Story 2.4), and the `cancel_request_driver` SECURITY DEFINER RPC implementing the 24h cutoff check, auto-reassignment/revert-to-pool decision, and verbatim notification microcopy. All 5 tasks complete, all 5 ACs manually verified against the live Supabase project. Status → review.
