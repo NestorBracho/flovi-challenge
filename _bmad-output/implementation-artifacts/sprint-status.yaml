@@ -85,10 +85,10 @@ development_status:
   3-2-gigs-list-realtime-sync-booking-confirmation: review
   3-3-booked-gigs-list: review
   3-4-cancel-24h-rule-mark-complete: review
-  3-5-deploy-driver-mobile-to-vercel: in-progress
+  3-5-deploy-driver-mobile-to-vercel: review
   epic-3-retrospective: optional
 
   epic-4: in-progress
-  4-1-cross-app-end-to-end-realtime-verification: ready-for-dev
-  4-2-repo-prompt-log-reflection-delivery-artifacts: ready-for-dev
+  4-1-cross-app-end-to-end-realtime-verification: review
+  4-2-repo-prompt-log-reflection-delivery-artifacts: review
   epic-4-retrospective: optional

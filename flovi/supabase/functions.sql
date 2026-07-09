@@ -4,7 +4,7 @@ create or replace function public.claim_role(p_role text)
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   v_existing_role text;
@@ -44,7 +44,7 @@ create or replace function public.cancel_request_dispatcher(p_request_id uuid)
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   v_caller_role text;
@@ -93,7 +93,7 @@ create or replace function public.book_request(p_request_id uuid)
 returns boolean
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   v_caller_role text;
@@ -152,10 +152,13 @@ begin
     return v_winner = auth.uid();
   end if;
 
-  -- Someone else already decided, or the row was never open: no assignment logic
-  -- runs, no state change. Covers both the losing bidder (AC #5) and the
-  -- already-closed request (AC #6).
-  return v_driver_id = auth.uid();
+  -- Someone else already decided, or the row was never open: no assignment logic runs,
+  -- no state change. Covers both the losing bidder (AC #5) and the already-closed
+  -- request (AC #6). "Won" is true only for a request currently booked to this caller:
+  -- a completed/cancelled request can still carry this caller's driver_id
+  -- (cancel_request_dispatcher leaves driver_id set), and that must read as
+  -- not-available, not as a win.
+  return v_status = 'booked' and v_driver_id = auth.uid();
 end;
 $$;
 
@@ -169,7 +172,7 @@ create or replace function public.cancel_request_driver(p_request_id uuid)
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   v_caller_role text;
@@ -243,12 +246,19 @@ begin
     where id = p_request_id;
   end if;
 
-  select full_name into v_cancelling_driver_name
+  -- COALESCE fallbacks are load-bearing, not cosmetic: profiles.full_name is nullable
+  -- (claim_role populates it from the OAuth full_name/name claim, which can be absent),
+  -- but notifications.message is NOT NULL and `NULL || text` evaluates to NULL in
+  -- Postgres. Without these, a driver with no name — whether the canceller or the
+  -- auto-reassignment target — would make v_message NULL and abort the entire
+  -- cancellation with a not-null violation instead of it succeeding. Named drivers are
+  -- unaffected: COALESCE only changes output when full_name is actually NULL.
+  select coalesce(full_name, 'A driver') into v_cancelling_driver_name
   from public.profiles
   where id = auth.uid();
 
   if v_new_driver_id is not null then
-    select full_name into v_new_driver_name
+    select coalesce(full_name, 'another driver') into v_new_driver_name
     from public.profiles
     where id = v_new_driver_id;
 
@@ -270,7 +280,7 @@ create or replace function public.complete_request(p_request_id uuid)
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = pg_catalog, public, pg_temp
 as $$
 declare
   v_caller_role text;

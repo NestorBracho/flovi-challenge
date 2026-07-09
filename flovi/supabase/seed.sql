@@ -36,6 +36,14 @@
 -- Profiles: 2 dispatchers, 3 drivers with varying completed_rides_count so the
 -- priority rule (highest completed_rides_count wins ties) is demoable.
 -- ---------------------------------------------------------------------------
+-- Wrap the entire seed in one explicit transaction. The set_config(..., true) calls
+-- below are transaction-local (is_local => true), so they only stay in scope for the
+-- following inserts if those inserts share the same transaction. An explicit begin/commit
+-- guarantees that regardless of how this script is executed — the Supabase SQL Editor
+-- (one query) or psql/autocommit (statement-by-statement) — and makes the seed atomic:
+-- a failure part-way rolls the whole thing back instead of half-seeding the project.
+begin;
+
 insert into public.profiles (id, role, full_name, completed_rides_count) values
   ('f307bf58-f3ff-4622-9318-34783ae92f79', 'dispatcher', 'Demo Dispatcher 1', 0),
   ('6e0b4b4f-672c-4454-995c-cb9c6fe90ba7', 'dispatcher', 'Demo Dispatcher 2', 0),
@@ -116,3 +124,5 @@ begin
   set status = 'completed', driver_id = '43027bbe-661c-4090-9f35-3d798223517e'
   where id = v_id;
 end $$;
+
+commit;

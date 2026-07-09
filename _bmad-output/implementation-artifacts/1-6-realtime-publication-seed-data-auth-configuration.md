@@ -49,6 +49,12 @@ so that Epic 2 and Epic 3 can start against a fully working, demoable backend fr
   - [x] Run `seed.sql` against the live project, confirm the expected row counts and status variety land correctly (including that the INSERT-then-UPDATE actually produces `booked`/`completed` rows, not silently-reverted `unbooked` ones)
   - [x] Full end-to-end OAuth verification (an actual sign-in completing through both layers) can't fully happen yet — no login screen exists until Stories 2.1/3.1. This story's verification is limited to confirming the dashboard/console configuration is saved correctly; treat Stories 2.1/3.1 as the real proof this worked.
 
+### Review Findings
+
+Adversarial code review of the Epic 1 Supabase contract (2026-07-09). Fixed in the working tree; no live action needed (project is already seeded — the fix only hardens future runs).
+
+- [x] [Review][Patch][Low] `seed.sql` relied on `set_config(..., true)` being transaction-scoped without an explicit transaction [flovi/supabase/seed.sql] — the transaction-local (`is_local => true`) jwt-claim `set_config` calls only stay in scope for the following inserts if all statements share one transaction. Verified working via the Supabase SQL Editor (which sends the script as a single query), but it would break if run statement-by-statement / autocommit (`created_by := auth.uid()` → NULL → not-null violation). Fixed: wrapped the whole seed in `begin; … commit;` (also makes it atomic).
+
 ## Dev Notes
 
 ### Seeded accounts are decorative, not something you can "log in as" — plan the actual demo around this now

@@ -56,6 +56,13 @@ so that the correct app experience is enforced from that point on and no one can
   - [x] Attempt a direct `UPDATE profiles SET role = 'driver' WHERE id = auth.uid()` as an authenticated client (e.g., via `supabase-js` with the anon key, or `curl` against PostgREST) → rejected/no rows affected, re-`SELECT` confirms `role` unchanged
   - [x] `SELECT * FROM profiles` as any authenticated test user → all rows returned
 
+### Review Findings
+
+Adversarial code review of the Epic 1 Supabase contract (2026-07-09). Both fixed in the working tree; each still needs applying to the live project (see the review's deploy checklist).
+
+- [x] [Review][Patch][Low] `profiles` never revoked Supabase's default write privileges [flovi/supabase/migrations/20260708181326_create_profiles.sql] — Supabase auto-grants INSERT/UPDATE/DELETE to `authenticated` on new public tables. profiles was write-locked by RLS default-deny alone (no write policy), so `role`/`completed_rides_count` were not directly exploitable — but that rested solely on no permissive write policy ever being added later, unlike every other table which revokes explicitly. Fixed: added `grant select` + `revoke insert, update, delete on public.profiles from authenticated`.
+- [x] [Review][Patch][Low] SECURITY DEFINER `search_path` left `pg_temp` implicitly first (all 5 RPCs) [flovi/supabase/functions.sql] — `set search_path = public` leaves an unlisted `pg_temp` implicitly searched *before* `pg_catalog`, so an unqualified built-in (`now()`, `pg_sleep()`) could in principle be shadowed by a `pg_temp` object under the definer's privileges. Not exploitable via PostgREST (the `authenticated` API role can't create pg_temp objects) — defense-in-depth. Fixed across all 5 RPCs: `set search_path = pg_catalog, public, pg_temp` (pg_catalog pinned first, pg_temp pinned last).
+
 ## Dev Notes
 
 **Scope boundary:** This story only builds `claim_role` and the `profiles` table. Story 2.1/3.1 will each write the actual client-side `.rpc('claim_role', ...)` call — get the parameter name right now so those later, independently-built stories don't guess differently.

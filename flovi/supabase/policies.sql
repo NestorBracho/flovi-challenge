@@ -52,12 +52,20 @@ with check (
   and driver_id = auth.uid()
 );
 
--- notifications: a dispatcher may only see/update their own notifications. FOR ALL
--- covers SELECT/UPDATE (INSERT/DELETE are moot since no GRANT for either ever exists —
--- only cancel_request_driver, as a SECURITY DEFINER function, ever inserts a row).
+-- notifications: a dispatcher may only see/update their own notifications. Role-gated
+-- (not just `dispatcher_id = auth.uid()`) to conform to AD-4's "role-gated, not just
+-- predicate-gated" rule and to stay safe if a second permissive policy is ever added to
+-- this table. FOR ALL covers SELECT/UPDATE (INSERT/DELETE are moot since no GRANT for
+-- either ever exists — only cancel_request_driver, as a SECURITY DEFINER function, inserts).
 create policy "dispatcher_own_notifications"
 on public.notifications
 for all
 to authenticated
-using (dispatcher_id = auth.uid())
-with check (dispatcher_id = auth.uid());
+using (
+  (select role from public.profiles where id = auth.uid()) = 'dispatcher'
+  and dispatcher_id = auth.uid()
+)
+with check (
+  (select role from public.profiles where id = auth.uid()) = 'dispatcher'
+  and dispatcher_id = auth.uid()
+);

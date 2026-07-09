@@ -54,6 +54,13 @@ so that the highest-priority driver reliably wins concurrent booking attempts.
   - [x] Call `book_request` on an already-`booked`/`completed`/`cancelled` row → `false`/not-available, no state change
   - [x] Call `book_request` as a dispatcher-role caller → exception raised
 
+### Review Findings
+
+Adversarial code review of the Epic 1 Supabase contract (2026-07-09). Both fixed in the working tree; each still needs applying to the live project (see the review's deploy checklist).
+
+- [x] [Review][Patch][Low] `booking_bids` had no unique constraint, making `book_request`'s `on conflict do nothing` safety-net inert [flovi/supabase/migrations/20260708190932_create_booking_bids.sql] — with no `unique (request_id, driver_id)` to conflict on, the safety-net insert always added a (harmless) duplicate bid instead of being idempotent, and a double-tapped client bid could create a second row. No wrong winner resulted (the tie-break still selects the earliest `bid_at`), but the "idempotent" claim was false. Fixed: added `unique (request_id, driver_id)`. **Forward-looking (Story 3.2):** the client-side bid insert must now tolerate/ignore a unique-violation on double-tap, or upsert.
+- [x] [Review][Patch][Low] `book_request` reported "won" (`true`) for a completed/cancelled request still carrying the caller's `driver_id` [flovi/supabase/functions.sql] — the else-branch returned `v_driver_id = auth.uid()`, but `cancel_request_dispatcher` leaves `driver_id` set on a cancelled row, so a driver calling `book_request` on their own completed/cancelled gig got `true` instead of AC #6's "not-available" result. Not reachable via the app UI and no state change, but a contract inconsistency. Fixed: return `v_status = 'booked' and v_driver_id = auth.uid()`.
+
 ## Dev Notes
 
 ### The most important thing in this story: why the bid insert can't happen *inside* `book_request` alone

@@ -54,6 +54,13 @@ so that late cancellations don't strand a scheduled ride and dispatchers learn a
   - [x] As a non-assigned driver, or as a dispatcher, call `cancel_request_driver` on someone else's booked request → exception, no state change
   - [x] As the dispatcher who owns R, confirm the new `notifications` row is visible via SELECT (RLS), and confirm a direct `UPDATE notifications SET read_at = now() WHERE id = ...` succeeds (proving Task 1's forward-looking grant actually works, even though no story yet calls it from a UI)
 
+### Review Findings
+
+Adversarial code review of the Epic 1 Supabase contract (2026-07-09). Both fixed in the working tree; each still needs applying to the live project (re-deploy `functions.sql` + the `ALTER POLICY` in the review's deploy checklist).
+
+- [x] [Review][Patch][HIGH] `cancel_request_driver` hard-failed when a driver's `full_name` was NULL [flovi/supabase/functions.sql] — `profiles.full_name` is nullable (claim_role populates it from the OAuth full_name/name claim, which can be absent), but `notifications.message` is `NOT NULL` and `NULL || text` evaluates to NULL in Postgres. A nameless canceller — or a nameless auto-reassignment target, which breaks it even for a *named* canceller — made the message NULL, aborting the whole cancellation with a not-null violation (opaque error, no cancellation, CAP-11/CAP-12 broken) instead of it succeeding. Fixed: `coalesce(full_name, 'A driver')` / `coalesce(full_name, 'another driver')` at the message build. Named drivers see byte-identical microcopy (COALESCE only changes output when full_name is actually NULL). *Likelihood note:* real Google accounts almost always supply a name, so it won't fire in the seeded demo — but the path was fully unguarded.
+- [x] [Review][Patch][Low] `dispatcher_own_notifications` was predicate-gated, not role-gated [flovi/supabase/policies.sql] — `using (dispatcher_id = auth.uid())` deviates from AD-4's "role-gated, not just predicate-gated" rule for notifications. Functionally safe today (single policy → no OR-combine; `dispatcher_id` only ever holds a dispatcher's id), but wouldn't defend a future second permissive policy on the table. Fixed: added the `(select role from profiles where id = auth.uid()) = 'dispatcher'` gate to both USING and WITH CHECK.
+
 ## Dev Notes
 
 ### The 24h cutoff formula — a real timezone subtlety, resolved by Supabase's default
