@@ -77,12 +77,12 @@ development_status:
   2-2-requests-list-with-realtime-sync-search-filter: review
   2-3-create-edit-request-via-modal: review
   2-4-cancel-request-dispatcher-notifications: review
-  2-5-deploy-dispatcher-web-to-vercel: in-progress
+  2-5-deploy-dispatcher-web-to-vercel: review
   epic-2-retrospective: optional
 
   epic-3: in-progress
-  3-1-app-shell-design-tokens-login-role-claiming: ready-for-dev
-  3-2-gigs-list-realtime-sync-booking-confirmation: ready-for-dev
+  3-1-app-shell-design-tokens-login-role-claiming: review
+  3-2-gigs-list-realtime-sync-booking-confirmation: review
   3-3-booked-gigs-list: ready-for-dev
   3-4-cancel-24h-rule-mark-complete: ready-for-dev
   3-5-deploy-driver-mobile-to-vercel: ready-for-dev
