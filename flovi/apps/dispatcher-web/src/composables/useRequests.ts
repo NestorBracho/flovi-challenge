@@ -12,11 +12,13 @@ export interface RelocationRequest {
   notes: string | null
   status: RequestStatus
   driver_id: string | null
+  driver: { full_name: string | null } | null
   created_at: string
   updated_at: string
 }
 
-const SELECT_COLUMNS = 'id, origin, destination, scheduled_date, notes, status, driver_id, created_at, updated_at'
+const SELECT_COLUMNS =
+  'id, origin, destination, scheduled_date, notes, status, driver_id, driver:profiles!driver_id(full_name), created_at, updated_at'
 
 export function useRequests() {
   const requests = ref<RelocationRequest[]>([])
@@ -24,6 +26,22 @@ export function useRequests() {
   const statusChangeAnnouncement = ref('')
 
   let channel: RealtimeChannel | null = null
+
+  // postgres_changes payloads carry only raw table columns, never the `driver:profiles(...)`
+  // embed hydrate() gets from PostgREST — this cache lets realtime upserts resolve a driver's
+  // name from driver_id without a network round-trip on every event once it's been seen once.
+  const driverNameCache = new Map<string, string | null>()
+
+  async function resolveDriver(driverId: string | null): Promise<{ full_name: string | null } | null> {
+    if (!driverId) return null
+
+    if (!driverNameCache.has(driverId)) {
+      const { data } = await supabase.from('profiles').select('full_name').eq('id', driverId).single()
+      driverNameCache.set(driverId, data?.full_name ?? null)
+    }
+
+    return { full_name: driverNameCache.get(driverId) ?? null }
+  }
 
   async function hydrate() {
     const { data, error } = await supabase
@@ -33,23 +51,27 @@ export function useRequests() {
 
     if (!error && data) {
       requests.value = data as RelocationRequest[]
+      for (const row of requests.value) {
+        if (row.driver_id) driverNameCache.set(row.driver_id, row.driver?.full_name ?? null)
+      }
     }
     loading.value = false
   }
 
-  function handleUpsert(row: RelocationRequest) {
-    const index = requests.value.findIndex((r) => r.id === row.id)
+  async function handleUpsert(row: RelocationRequest) {
+    const resolvedRow = { ...row, driver: await resolveDriver(row.driver_id) }
+    const index = requests.value.findIndex((r) => r.id === resolvedRow.id)
 
     if (index === -1) {
-      requests.value.unshift(row)
+      requests.value.unshift(resolvedRow)
       return
     }
 
     const previousStatus = requests.value[index].status
-    requests.value[index] = row
+    requests.value[index] = resolvedRow
 
-    if (previousStatus !== row.status) {
-      statusChangeAnnouncement.value = `${row.origin} to ${row.destination} is now ${row.status}.`
+    if (previousStatus !== resolvedRow.status) {
+      statusChangeAnnouncement.value = `${resolvedRow.origin} to ${resolvedRow.destination} is now ${resolvedRow.status}.`
     }
   }
 

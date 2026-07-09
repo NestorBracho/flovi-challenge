@@ -14,6 +14,7 @@ const scheduledDateInput = ref(null)
 const mode = ref('create')
 const requestId = ref(null)
 const saving = ref(false)
+const saveError = ref('')
 
 const form = reactive({
   origin: '',
@@ -38,6 +39,7 @@ function resetForm(request) {
   errors.origin = ''
   errors.destination = ''
   errors.scheduledDate = ''
+  saveError.value = ''
 }
 
 async function openCreate() {
@@ -97,6 +99,7 @@ async function handleSave() {
   }
 
   saving.value = true
+  saveError.value = ''
 
   const payload = {
     origin: form.origin.trim(),
@@ -115,6 +118,7 @@ async function handleSave() {
   saving.value = false
 
   if (error || !data) {
+    saveError.value = "We couldn't save this request — try again."
     return
   }
 
@@ -224,6 +228,10 @@ async function handleSave() {
           class="mt-flovi-1 w-full rounded-sm border border-border-subtle bg-surface-tint px-flovi-3 py-flovi-2 text-body text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
         />
       </div>
+
+      <p v-if="saveError" class="text-body text-status-cancelled-text" role="alert">
+        {{ saveError }}
+      </p>
 
       <div class="mt-flovi-2 flex justify-end gap-flovi-3">
         <button

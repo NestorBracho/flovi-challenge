@@ -63,6 +63,10 @@ async function confirmCancel() {
 
     <p class="mt-flovi-2 text-meta text-text-secondary">{{ formattedDate }}</p>
 
+    <p v-if="request.driver" class="mt-flovi-1 text-meta text-text-secondary">
+      Driver: {{ request.driver.full_name ?? 'Unnamed driver' }}
+    </p>
+
     <p v-if="request.notes" class="mt-flovi-3 text-body text-text-secondary">{{ request.notes }}</p>
 
     <div class="mt-flovi-3 flex items-center justify-end gap-flovi-3">
